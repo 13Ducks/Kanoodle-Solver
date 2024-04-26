@@ -113,6 +113,7 @@ function FitShapes(Shapes, Board, BoardX, BoardY, ShapeList)
                     if(NewShapeList.length == 0){
                         // Got a solution!
                         self.postMessage({'MsgType': "solution", 'Board': JSON.stringify(NewBoard)});
+                        throw "Solution found";
                     }
                     else{
                         // Recurse

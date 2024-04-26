@@ -1,108 +1,127 @@
 <script>
-  import { writable } from 'svelte/store';
-  import Solver from './lib/Solver.svelte'
+  import { writable } from "svelte/store";
+  import Solver from "./lib/Solver.svelte";
 
   const rows = 5;
   const cols = 11;
-  let board = Array(rows).fill(null).map(() => Array(cols).fill(null));
+  let board = Array(rows)
+    .fill(null)
+    .map(() => Array(cols).fill(null));
 
   let pieces = writable({
+    l: {
+      shape: [
+        [1, 1, 1],
+        [1, 0, 0],
+      ],
+      color: "#FA430A",
+      placed: false,
+    },
     L: {
       shape: [
         [1, 1, 1, 1],
-        [0, 0, 0, 1]
+        [0, 0, 0, 1],
       ],
-      color: '#033699',
-      placed: false
+      color: "#033699",
+      placed: false,
+    },
+    S: {
+      shape: [
+        [1, 1],
+        [1, 1],
+      ],
+      color: "#72E946",
+      placed: false,
     },
     i: {
       shape: [
         [1, 1],
-        [1, 0]
+        [1, 0],
       ],
-      color: '#DCD8BA',
-      placed: false
+      color: "#DCD8BA",
+      placed: false,
     },
     N: {
       shape: [
         [1, 1, 0, 0],
-        [0, 1, 1, 1]
+        [0, 1, 1, 1],
       ],
-      color: '#10783A',
-      placed: false
+      color: "#10783A",
+      placed: false,
     },
     V: {
       shape: [
         [1, 0, 0],
         [1, 0, 0],
-        [1, 1, 1]
+        [1, 1, 1],
       ],
-      color: '#A2DDD7',
-      placed: false
+      color: "#A2DDD7",
+      placed: false,
     },
     P: {
       shape: [
         [1, 1],
         [1, 1],
-        [1, 0]
+        [1, 0],
       ],
-      color: '#FA001A',
-      placed: false
+      color: "#FA001A",
+      placed: false,
     },
     U: {
       shape: [
         [1, 1],
         [1, 0],
-        [1, 1]
+        [1, 1],
       ],
-      color: '#FEE01F',
-      placed: false
+      color: "#FEE01F",
+      placed: false,
     },
     W: {
       shape: [
         [1, 0, 0],
         [1, 1, 0],
-        [0, 1, 1]
+        [0, 1, 1],
       ],
-      color: '#F13679',
-      placed: false
+      color: "#F13679",
+      placed: false,
     },
     X: {
       shape: [
         [0, 1, 0],
         [1, 1, 1],
-        [0, 1, 0]
+        [0, 1, 0],
       ],
-      color: '#D2D0CB',
-      placed: false
+      color: "#D2D0CB",
+      placed: false,
     },
     Y: {
       shape: [
         [0, 1],
         [1, 1],
         [0, 1],
-        [0, 1]
+        [0, 1],
       ],
-      color: '#FDD7CB',
-      placed: false
+      color: "#FDD7CB",
+      placed: false,
     },
     I: {
-      shape: [
-        [1],
-        [1],
-        [1],
-        [1]
-      ],
-      color: '#612690',
-      placed: false
-    }
+      shape: [[1], [1], [1], [1]],
+      color: "#612690",
+      placed: false,
+    },
   });
 
   let draggedPiece = null;
   let draggedPieceFromBoard = false;
   let hoverPos = [];
 
-  function handleDragStart(event, pieceName, fromBoard = false, row = null, col = null) {
+  function handleDragStart(
+    event,
+    pieceName,
+    fromBoard = false,
+    row = null,
+    col = null,
+  ) {
     draggedPiece = pieceName;
     draggedPieceFromBoard = fromBoard;
 
@@ -114,14 +133,18 @@
 
       for (let i = 0; i < pieceRows; i++) {
         for (let j = 0; j < pieceCols; j++) {
-          if (piece.shape[i][j] === 1 && board[row + i] && board[row + i][col + j] === pieceName) {
+          if (
+            piece.shape[i][j] === 1 &&
+            board[row + i] &&
+            board[row + i][col + j] === pieceName
+          ) {
             board[row + i][col + j] = null;
           }
         }
       }
     }
 
-    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.effectAllowed = "move";
   }
 
   function handleDragOver(event) {
@@ -167,7 +190,7 @@
       }
     }
 
-    pieces.update(currentPieces => {
+    pieces.update((currentPieces) => {
       currentPieces[draggedPiece].placed = true;
       return currentPieces;
     });
@@ -199,7 +222,9 @@
   function rotatePiece(piece) {
     const rows = piece.shape.length;
     const cols = piece.shape[0].length;
-    const rotatedShape = Array(cols).fill(null).map(() => Array(rows).fill(0));
+    const rotatedShape = Array(cols)
+      .fill(null)
+      .map(() => Array(rows).fill(0));
 
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < cols; j++) {
@@ -213,7 +238,9 @@
   function flipPiece(piece) {
     const rows = piece.shape.length;
     const cols = piece.shape[0].length;
-    const flippedShape = Array(rows).fill(null).map(() => Array(cols).fill(0));
+    const flippedShape = Array(rows)
+      .fill(null)
+      .map(() => Array(cols).fill(0));
 
     for (let i = 0; i < rows; i++) {
       for (let j = 0; j < cols; j++) {
@@ -225,7 +252,7 @@
   }
 
   function handleRotateClick(pieceName) {
-    pieces.update(currentPieces => {
+    pieces.update((currentPieces) => {
       const piece = currentPieces[pieceName];
       rotatePiece(piece);
       return currentPieces;
@@ -233,7 +260,7 @@
   }
 
   function handleFlipClick(pieceName) {
-    pieces.update(currentPieces => {
+    pieces.update((currentPieces) => {
       const piece = currentPieces[pieceName];
       flipPiece(piece);
       return currentPieces;
@@ -245,17 +272,20 @@
   {#each board as row, rowIndex}
     <div class="row">
       {#each row as cell, colIndex}
-      <!-- svelte-ignore a11y-no-static-element-interactions -->
-      <div
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div
           class="circle"
           class:hovered={hoverPos.some(([r, c]) => console.log(r, c))}
           on:dragenter={(event) => handleDragEnter(event, rowIndex, colIndex)}
           on:dragleave={handleDragLeave}
           on:dragover={handleDragOver}
           on:drop={(event) => handleDrop(event, rowIndex, colIndex)}
-        > 
+        >
           {#if cell}
-            <div class="circle" style="background-color: {$pieces[cell].color};"></div>
+            <div
+              class="circle"
+              style="background-color: {$pieces[cell].color};"
+            ></div>
           {/if}
         </div>
       {/each}
@@ -266,29 +296,35 @@
 <div class="pieces">
   {#each Object.entries($pieces) as [pieceName, piece]}
     {#if !piece.placed}
-    <div class="piece-container">
-      <!-- svelte-ignore a11y-no-static-element-interactions -->
-      <div class="piece" draggable="true" 
-      on:dragstart={(event) => handleDragStart(event, pieceName)}
-       >
-        {#each piece.shape as row}
-          <div class="piece-row">
-            {#each row as cell}
-                <div class="piece-cell" style="background-color: {cell === 1 ? piece.color : 'transparent'};"></div>
-            {/each}
-          </div>
-        {/each}
+      <div class="piece-container">
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div
+          class="piece"
+          draggable="true"
+          on:dragstart={(event) => handleDragStart(event, pieceName)}
+        >
+          {#each piece.shape as row}
+            <div class="piece-row">
+              {#each row as cell}
+                <div
+                  class="piece-cell"
+                  style="background-color: {cell === 1
+                    ? piece.color
+                    : 'transparent'};"
+                ></div>
+              {/each}
+            </div>
+          {/each}
+        </div>
+        <div class="piece-buttons">
+          <button on:click={() => handleRotateClick(pieceName)}>Rotate</button>
+          <button on:click={() => handleFlipClick(pieceName)}>Flip</button>
+        </div>
       </div>
-    <div class="piece-buttons">
-      <button on:click={() => handleRotateClick(pieceName)}>Rotate</button>
-      <button on:click={() => handleFlipClick(pieceName)}>Flip</button>
-    </div>
-  </div>
     {/if}
   {/each}
 </div>
-<Solver />
-
+<Solver {board} pieces={$pieces} />
 
 <style>
   .board {

@@ -78,7 +78,7 @@ function FitShapes(Shapes, Board, BoardX, BoardY, ShapeList)
     for(var ListItem=0; ListItem<ShapeList.length; ListItem++){
         var ShapeNo = ShapeList[ListItem];
         var Shape = Shapes[ShapeNo];
-        var Layouts = Shape.Layout;
+        var Layouts = Shape.layout;
         for(var LayoutNo=0; LayoutNo<Layouts.length; LayoutNo++){
             var Layout = Layouts[LayoutNo];
             for(var PtNo=0; PtNo<Layout.length; PtNo++){
@@ -113,6 +113,7 @@ function FitShapes(Shapes, Board, BoardX, BoardY, ShapeList)
                     if(NewShapeList.length == 0){
                         // Got a solution!
                         self.postMessage({'MsgType': "solution", 'Board': JSON.stringify(NewBoard)});
+                        throw "Solution found";
                     }
                     else{
                         // Recurse
