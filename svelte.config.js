@@ -7,7 +7,7 @@ const config = {
       adapter: adapter()
   },
   paths: {
-    base: '/Kanoodle-Solver/'
+    base: process.argv.includes('dev') ? '' : process.env.BASE_PATH
   },
   preprocess: vitePreprocess()
 };
