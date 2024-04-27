@@ -1,12 +1,3 @@
-// Tweakables
-
-var ShowWork = false;
-var FPSTarget = 30;
-
-// End of tweakables
-
-var LastUpdateTime = 0;
-
 Object.prototype.clone = function() {
   var newObj = (this instanceof Array) ? [] : {};
   for (var i in this) {
@@ -55,8 +46,6 @@ function FitShapes(Shapes, Board, BoardX, BoardY, ShapeList)
 {
     var BoardLayout = Board.Layout;
     var Pt;
-    var DateNow;
-    var TimeNow;
     
     // Find free square
     do{
@@ -82,12 +71,12 @@ function FitShapes(Shapes, Board, BoardX, BoardY, ShapeList)
         for(var LayoutNo=0; LayoutNo<Layouts.length; LayoutNo++){
             var Layout = Layouts[LayoutNo];
             for(var PtNo=0; PtNo<Layout.length; PtNo++){
-                OffX = BoardX - Layout[PtNo][0];
-                OffY = BoardY - Layout[PtNo][1];
-                Fit = true;
-                for(Pt=0; Pt<Layout.length; Pt++){
-                    PtX = OffX + Layout[Pt][0];
-                    PtY = OffY + Layout[Pt][1];
+                var OffX = BoardX - Layout[PtNo][0];
+                var OffY = BoardY - Layout[PtNo][1];
+                var Fit = true;
+                for(var Pt=0; Pt<Layout.length; Pt++){
+                    var PtX = OffX + Layout[Pt][0];
+                    var PtY = OffY + Layout[Pt][1];
                     if(PtX<0 || PtX>=Board.Width || PtY<0 || PtY>=Board.Height){
                         Fit = false;
                         break;
@@ -101,9 +90,9 @@ function FitShapes(Shapes, Board, BoardX, BoardY, ShapeList)
                     // The shape fits here
                     var NewBoard = Board.clone();
                     // Update the board
-                    for(Pt=0; Pt<Layout.length; Pt++){
-                        PtX = OffX + Layout[Pt][0];
-                        PtY = OffY + Layout[Pt][1];
+                    for(var Pt=0; Pt<Layout.length; Pt++){
+                        var PtX = OffX + Layout[Pt][0];
+                        var PtY = OffY + Layout[Pt][1];
                         NewBoard.Layout[PtX][PtY] = ShapeNo;
                     }      
                     // Update the shape list
@@ -116,15 +105,6 @@ function FitShapes(Shapes, Board, BoardX, BoardY, ShapeList)
                         throw "Solution found";
                     }
                     else{
-                        // Recurse
-                        if(ShowWork){
-                            DateNow = new Date();
-                            TimeNow = DateNow.getTime();
-                            if((TimeNow - LastUpdateTime) > (1000 / FPSTarget)){
-                                self.postMessage({'MsgType': "workupdate", 'Board': JSON.stringify(NewBoard)});
-                                LastUpdateTime = TimeNow;
-                            }
-                        }
                         FitShapes(Shapes, NewBoard, BoardX, BoardY, NewShapeList);
                     }
                 }
