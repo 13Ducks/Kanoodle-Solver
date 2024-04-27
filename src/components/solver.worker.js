@@ -9,7 +9,7 @@ var LastUpdateTime = 0;
 
 Object.prototype.clone = function() {
   var newObj = (this instanceof Array) ? [] : {};
-  for (i in this) {
+  for (var i in this) {
     if (i == 'clone') continue;
     if (this[i] && typeof this[i] == "object") {
       newObj[i] = this[i].clone();
@@ -42,7 +42,7 @@ function MsgHandler(Event)
 function StartFit(Shapes, Board)
 {    
     var ShapeList = [];
-    for(i=0; i<Shapes.length; i++){
+    for(var i=0; i<Shapes.length; i++){
         ShapeList.push(i);
     }
 
