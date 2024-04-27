@@ -16,8 +16,5 @@
     "gh-pages": "^6.1.1",
     "svelte": "^4.2.12",
     "vite": "^5.2.0"
-  },
-  "dependencies": {
-    "dlxlib": "^1.0.3"
   }
 }
