@@ -7,7 +7,7 @@ const config = {
       adapter: adapter()
   },
   paths: {
-    base: process.argv.includes('dev') ? '' : '/kanoodle-solver'
+    assets: 'https://aaryan.dev',
   },
   preprocess: vitePreprocess()
 };
