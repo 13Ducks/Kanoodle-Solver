@@ -6,6 +6,9 @@ const config = {
       appDir: 'app', // Required as the default is _app
       adapter: adapter()
   },
+  paths: {
+    base: '/Kanoodle-Solver/'
+  },
   preprocess: vitePreprocess()
 };
 
