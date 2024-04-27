@@ -1,6 +1,6 @@
 <script>
   import { writable } from "svelte/store";
-  import Solver from "./lib/Solver.svelte";
+  import Solver from "../components/Solver.svelte";
 
   const rows = 5;
   const cols = 11;
@@ -268,65 +268,75 @@
   }
 </script>
 
-<div class="board">
-  {#each board as row, rowIndex}
-    <div class="row">
-      {#each row as cell, colIndex}
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div
-          class="circle"
-          class:hovered={hoverPos.some(([r, c]) => console.log(r, c))}
-          on:dragenter={(event) => handleDragEnter(event, rowIndex, colIndex)}
-          on:dragleave={handleDragLeave}
-          on:dragover={handleDragOver}
-          on:drop={(event) => handleDrop(event, rowIndex, colIndex)}
-        >
-          {#if cell}
-            <div
-              class="circle"
-              style="background-color: {$pieces[cell].color};"
-            ></div>
-          {/if}
-        </div>
-      {/each}
-    </div>
-  {/each}
-</div>
-
-<div class="pieces">
-  {#each Object.entries($pieces) as [pieceName, piece]}
-    {#if !piece.placed}
-      <div class="piece-container">
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <div
-          class="piece"
-          draggable="true"
-          on:dragstart={(event) => handleDragStart(event, pieceName)}
-        >
-          {#each piece.shape as row}
-            <div class="piece-row">
-              {#each row as cell}
-                <div
-                  class="piece-cell"
-                  style="background-color: {cell === 1
-                    ? piece.color
-                    : 'transparent'};"
-                ></div>
-              {/each}
-            </div>
-          {/each}
-        </div>
-        <div class="piece-buttons">
-          <button on:click={() => handleRotateClick(pieceName)}>Rotate</button>
-          <button on:click={() => handleFlipClick(pieceName)}>Flip</button>
-        </div>
+<div class="full-app">
+  <div class="board">
+    {#each board as row, rowIndex}
+      <div class="row">
+        {#each row as cell, colIndex}
+          <!-- svelte-ignore a11y-no-static-element-interactions -->
+          <div
+            class="circle"
+            class:hovered={hoverPos.some(([r, c]) => console.log(r, c))}
+            on:dragenter={(event) => handleDragEnter(event, rowIndex, colIndex)}
+            on:dragleave={handleDragLeave}
+            on:dragover={handleDragOver}
+            on:drop={(event) => handleDrop(event, rowIndex, colIndex)}
+          >
+            {#if cell}
+              <div
+                class="circle"
+                style="background-color: {$pieces[cell].color};"
+              ></div>
+            {/if}
+          </div>
+        {/each}
       </div>
-    {/if}
-  {/each}
+    {/each}
+  </div>
+
+  <div class="pieces">
+    {#each Object.entries($pieces) as [pieceName, piece]}
+      {#if !piece.placed}
+        <div class="piece-container">
+          <!-- svelte-ignore a11y-no-static-element-interactions -->
+          <div
+            class="piece"
+            draggable="true"
+            on:dragstart={(event) => handleDragStart(event, pieceName)}
+          >
+            {#each piece.shape as row}
+              <div class="piece-row">
+                {#each row as cell}
+                  <div
+                    class="piece-cell"
+                    style="background-color: {cell === 1
+                      ? piece.color
+                      : 'transparent'};"
+                  ></div>
+                {/each}
+              </div>
+            {/each}
+          </div>
+          <div class="piece-buttons">
+            <button on:click={() => handleRotateClick(pieceName)}>Rotate</button
+            >
+            <button on:click={() => handleFlipClick(pieceName)}>Flip</button>
+          </div>
+        </div>
+      {/if}
+    {/each}
+  </div>
+  <Solver {board} pieces={$pieces} />
 </div>
-<Solver {board} pieces={$pieces} />
 
 <style>
+  .full-app {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin: 0 auto;
+  }
+
   .board {
     display: flex;
     flex-direction: column;

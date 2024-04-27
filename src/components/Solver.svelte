@@ -12,11 +12,6 @@
         worker.onmessage = (event) => {
             MessageCb(event);
         };
-        worker.postMessage({
-            MsgType: "random",
-            Shapes: JSON.stringify([]),
-            Board: JSON.stringify([]),
-        });
     });
 
     const tiles = [
@@ -321,6 +316,7 @@
         let tilesToUse = tiles.filter((tile) => !pieces[tile.name].placed);
         let [shapes, Board] = init(tilesToUse);
         solvable = "Checking...";
+        console.log(shapes, Board);
         worker.postMessage({
             MsgType: "start",
             Shapes: JSON.stringify(shapes),
@@ -329,10 +325,21 @@
     }
 </script>
 
-<button
-    on:click={() => {
-        startWorker(tiles);
-    }}>Solvable?</button
->
+<div class="solve">
+    <button
+        on:click={() => {
+            startWorker(tiles);
+        }}>Solvable?</button
+    >
 
-<h2>{solvable}</h2>
+    <h2>{solvable}</h2>
+</div>
+
+<style>
+    .solve {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+</style>
