@@ -12,6 +12,9 @@
     .fill(false)
     .map(() => Array(cols).fill(false));
 
+  let solution = null;
+  let request = "";
+
   let pieces = writable({
     l: {
       shape: [
@@ -114,6 +117,53 @@
       placed: false,
     },
   });
+
+  let updated = false;
+
+  $: if (solution || request) {
+    updated = false;
+  }
+
+  $: {
+    if (updated) break $;
+    updated = true;
+
+    if (solution !== null && request == "solve") {
+      pieces.update((currentPieces) => {
+        for (let pieceName in currentPieces) {
+          currentPieces[pieceName].placed = true;
+        }
+        return currentPieces;
+      });
+
+      for (let i = 0; i < solution.length; i++) {
+        for (let j = 0; j < solution[i].length; j++) {
+          board[j][i] = solution[i][j];
+        }
+      }
+    } else if (solution !== null && request == "hint") {
+      let hintPiece = null;
+      for (let piece in $pieces) {
+        if (!$pieces[piece].placed) {
+          hintPiece = piece;
+          break;
+        }
+      }
+
+      for (let i = 0; i < solution.length; i++) {
+        for (let j = 0; j < solution[i].length; j++) {
+          if (solution[i][j] === hintPiece) {
+            board[j][i] = hintPiece;
+          }
+        }
+      }
+
+      pieces.update((currentPieces) => {
+        currentPieces[hintPiece].placed = true;
+        return currentPieces;
+      });
+    }
+  }
 
   let draggedPiece = null;
   let draggedPieceFromBoard = false;
@@ -333,7 +383,7 @@
       {/if}
     {/each}
   </div>
-  <Solver {board} pieces={$pieces} />
+  <Solver {board} pieces={$pieces} bind:solution bind:request />
 </div>
 
 <style>

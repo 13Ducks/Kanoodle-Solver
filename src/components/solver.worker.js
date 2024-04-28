@@ -1,3 +1,5 @@
+// FROM https://github.com/andywarduk/KanoodleJs
+
 Object.prototype.clone = function() {
   var newObj = (this instanceof Array) ? [] : {};
   for (var i in this) {
@@ -101,6 +103,13 @@ function FitShapes(Shapes, Board, BoardX, BoardY, ShapeList)
 //                    Debug("Fit shape " + Shape.Name + "(" + ShapeNo + ") layout " + LayoutNo + " point " + PtNo + " at " + BoardX + ","+BoardY);
                     if(NewShapeList.length == 0){
                         // Got a solution!
+                        for (var i = 0; i < NewBoard.Layout.length; i++) {
+                            for (var j = 0; j < NewBoard.Layout[i].length; j++) {
+                                if (typeof NewBoard.Layout[i][j] === 'number') {
+                                    NewBoard.Layout[i][j] = Shapes[NewBoard.Layout[i][j]].name;
+                                }
+                            }
+                        }
                         self.postMessage({'MsgType': "solution", 'Board': JSON.stringify(NewBoard)});
                         throw "Solution found";
                     }

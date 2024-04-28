@@ -2,8 +2,11 @@
     import { onMount } from "svelte";
 
     let worker = null;
+    let ranSolver = false;
     let solvable = "";
 
+    export let solution = null;
+    export let request = "";
     export let board;
     export let pieces;
 
@@ -131,8 +134,6 @@
             ],
         },
     ];
-
-    let solutions = new Set();
 
     function shiftShape(shape) {
         let newShape = JSON.parse(JSON.stringify(shape));
@@ -278,7 +279,7 @@
             var Col = new Array();
             for (j = 0; j < Board.Height; j++) {
                 if (boardConfig[j].substring(i, i + 1) == ".") Col.push(-1);
-                else Col.push(-2);
+                else Col.push(boardConfig[j].substring(i, i + 1));
             }
             Board.Layout.push(Col);
         }
@@ -297,16 +298,14 @@
                 break;
 
             case "solution":
-                if (solutions.has(Data.Board)) {
-                    break;
-                }
-
-                let Board = JSON.parse(Data.Board);
-                console.log(Board);
+                let board = JSON.parse(Data.Board).Layout;
+                ranSolver = true;
+                solution = board;
                 solvable = "Solvable";
                 break;
 
             case "finished":
+                ranSolver = true;
                 solvable = "Not Solvable";
                 break;
         }
@@ -315,7 +314,6 @@
     function startWorker(tiles) {
         let tilesToUse = tiles.filter((tile) => !pieces[tile.name].placed);
         let [shapes, Board] = init(tilesToUse);
-        solvable = "Checking...";
         console.log(shapes, Board);
         worker.postMessage({
             MsgType: "start",
@@ -323,14 +321,62 @@
             Board: JSON.stringify(Board),
         });
     }
+
+    function handleSolvable() {
+        request = "solvable";
+        if (ranSolver) {
+            if (solution.size > 0) {
+                solvable = "Solvable";
+            } else {
+                solvable = "Not Solvable";
+            }
+        } else {
+            solvable = "Checking...";
+            startWorker(tiles);
+        }
+    }
+
+    function handleHint() {
+        request = "hint";
+        if (!ranSolver) {
+            solvable = "Solving...";
+            startWorker(tiles);
+        }
+    }
+
+    function handleSolve() {
+        request = "solve";
+        if (!ranSolver) {
+            solvable = "Solving...";
+            startWorker(tiles);
+        }
+    }
+
+    $: {
+        if (board || pieces) {
+            ranSolver = false;
+        }
+    }
 </script>
 
 <div class="solve">
-    <button
-        on:click={() => {
-            startWorker(tiles);
-        }}>Solvable?</button
-    >
+    <div>
+        <button
+            on:click={() => {
+                handleSolvable();
+            }}>Solvable?</button
+        >
+        <button
+            on:click={() => {
+                handleHint(tiles);
+            }}>Hint</button
+        >
+        <button
+            on:click={() => {
+                handleSolve(tiles);
+            }}>Solve</button
+        >
+    </div>
 
     <h2>{solvable}</h2>
 </div>
