@@ -8,6 +8,10 @@
     .fill(null)
     .map(() => Array(cols).fill(null));
 
+  let hovered = Array(rows)
+    .fill(false)
+    .map(() => Array(cols).fill(false));
+
   let pieces = writable({
     l: {
       shape: [
@@ -113,7 +117,6 @@
 
   let draggedPiece = null;
   let draggedPieceFromBoard = false;
-  let hoverPos = [];
 
   function handleDragStart(
     event,
@@ -155,6 +158,12 @@
     event.preventDefault();
     if (!draggedPiece) return;
 
+    for (let row = 0; row < hovered.length; row++) {
+      for (let col = 0; col < hovered[row].length; col++) {
+        hovered[row][col] = false;
+      }
+    }
+
     const piece = $pieces[draggedPiece];
     const pieceRows = piece.shape.length;
     const pieceCols = piece.shape[0].length;
@@ -194,6 +203,7 @@
       currentPieces[draggedPiece].placed = true;
       return currentPieces;
     });
+
     draggedPiece = null;
   }
 
@@ -204,12 +214,11 @@
     const piece = $pieces[draggedPiece];
     const pieceRows = piece.shape.length;
     const pieceCols = piece.shape[0].length;
-
     // Update the hover rows and columns
     for (let i = 0; i < pieceRows; i++) {
       for (let j = 0; j < pieceCols; j++) {
-        if (piece.shape[i][j] === 1) {
-          hoverPos.push([row + i, col + j]);
+        if (piece.shape[i][j] === 1 && row + i < rows && col + j < cols) {
+          hovered[row + i][col + j] = true;
         }
       }
     }
@@ -217,7 +226,11 @@
 
   function handleDragLeave(event) {
     event.preventDefault();
-    hoverPos = [];
+    for (let row = 0; row < hovered.length; row++) {
+      for (let col = 0; col < hovered[row].length; col++) {
+        hovered[row][col] = false;
+      }
+    }
   }
   function rotatePiece(piece) {
     const rows = piece.shape.length;
@@ -276,19 +289,13 @@
           <!-- svelte-ignore a11y-no-static-element-interactions -->
           <div
             class="circle"
-            class:hovered={hoverPos.some(([r, c]) => console.log(r, c))}
+            class:hovered={hovered[rowIndex][colIndex]}
+            style="background-color: {cell ? $pieces[cell].color : '#4c4a4a'};"
             on:dragenter={(event) => handleDragEnter(event, rowIndex, colIndex)}
             on:dragleave={handleDragLeave}
             on:dragover={handleDragOver}
             on:drop={(event) => handleDrop(event, rowIndex, colIndex)}
-          >
-            {#if cell}
-              <div
-                class="circle"
-                style="background-color: {$pieces[cell].color};"
-              ></div>
-            {/if}
-          </div>
+          ></div>
         {/each}
       </div>
     {/each}
@@ -353,7 +360,6 @@
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background-color: #4c4a4a;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -390,7 +396,7 @@
   }
 
   .circle.hovered {
-    background-color: rgba(0, 0, 0, 0.1);
+    opacity: 0.2;
   }
 
   .piece-buttons {
