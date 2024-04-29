@@ -24,12 +24,46 @@ function MsgHandler(Event)
     
     switch(Data.MsgType){
         case "start":
+            const checkFailed = checkObviousFail(JSON.parse(Data.Board));
+            if (checkFailed) {
+                self.postMessage({'MsgType': "finished"});
+                return;
+            }
             StartFit(JSON.parse(Data.Shapes), JSON.parse(Data.Board));
             break;
         default:
             Debug("Unrecognised command " + Data.MsgType);
             break;
     }
+}
+
+function checkObviousFail(board) {
+    const boardClone = board.clone();
+    const layout = boardClone.Layout;
+    const m = layout.length;
+    const n = layout[0].length;
+
+
+    function dfs(i, j) {
+        if (i >= 0 && i < m && j >= 0 && j < n && layout[i][j] === -1) {
+            layout[i][j] = 0;
+            return 1 + dfs(i - 1, j) + dfs(i, j + 1) + dfs(i + 1, j) + dfs(i, j - 1);
+        }
+        return 0;
+    }
+
+    const areas = [];
+    for (let i = 0; i < m; i++) {
+        for (let j = 0; j < n; j++) {
+            if (layout[i][j] === -1) {
+                areas.push(dfs(i, j));
+            }
+        }
+    }
+
+    // no piece smaller than 3 so must be impossible
+    if (Math.min(...areas) <= 2) return true;
+    return false;
 }
 
 function StartFit(Shapes, Board)

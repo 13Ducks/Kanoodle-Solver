@@ -1,6 +1,9 @@
 <script>
     import { onMount } from "svelte";
 
+    const rows = 11;
+    const cols = 5;
+
     let worker = null;
     let ranSolver = false;
     let solvable = "";
@@ -220,7 +223,7 @@
         shapes[shapeNo].layout.push(layout);
     }
 
-    function init(tiles) {
+    function init(tiles, board) {
         let shapes = [];
         let curShape;
         let i, j, k;
@@ -306,26 +309,43 @@
 
             case "finished":
                 ranSolver = true;
+                solution = null;
                 solvable = "Not Solvable";
                 break;
         }
     }
 
+    function getRandomPieces(count) {
+        const keys = Object.keys(tiles);
+        const result = [];
+
+        for (let i = 0; i < count; i++) {
+            if (keys.length === 0) {
+                break;
+            }
+            const randomIndex = Math.floor(Math.random() * keys.length);
+            const randomKey = keys.splice(randomIndex, 1)[0];
+            result.push(tiles[randomKey]);
+        }
+
+        return result;
+    }
+
     function startWorker(tiles) {
         let tilesToUse = tiles.filter((tile) => !pieces[tile.name].placed);
-        let [shapes, Board] = init(tilesToUse);
-        console.log(shapes, Board);
+        let [shapes, solveBoard] = init(tilesToUse, board);
+        console.log(shapes, solveBoard);
         worker.postMessage({
             MsgType: "start",
             Shapes: JSON.stringify(shapes),
-            Board: JSON.stringify(Board),
+            Board: JSON.stringify(solveBoard),
         });
     }
 
     function handleSolvable() {
         request = "solvable";
         if (ranSolver) {
-            if (solution.size > 0) {
+            if (solution !== null) {
                 solvable = "Solvable";
             } else {
                 solvable = "Not Solvable";
@@ -352,8 +372,81 @@
         }
     }
 
+    async function handleRandom() {
+        request = "random";
+        solvable = "Randomizing...";
+
+        let newBoard = Array(rows)
+            .fill(null)
+            .map(() => Array(cols).fill(null));
+        const randomPieces = getRandomPieces(2);
+        console.log(randomPieces);
+
+        for (const piece of randomPieces) {
+            const pieceLayout = piece.layout;
+
+            let placed = false;
+            while (!placed) {
+                const row = Math.floor(Math.random() * board.length);
+                const col = Math.floor(Math.random() * board[0].length);
+
+                for (const [pieceRow, pieceCol] of pieceLayout) {
+                    if (
+                        row + pieceRow - 1 >= board.length ||
+                        col + pieceCol - 1 >= board[0].length ||
+                        newBoard[row + pieceRow - 1][col + pieceCol - 1] !==
+                            null
+                    ) {
+                        continue;
+                    }
+                }
+                placed = true;
+
+                for (const [pieceRow, pieceCol] of pieceLayout) {
+                    console.log(row, col, pieceRow, pieceCol);
+                    newBoard[row + pieceRow - 1][col + pieceCol - 1] =
+                        piece.name;
+                }
+            }
+        }
+
+        console.log(newBoard);
+
+        // Check if the game is solvable
+        const remainingTiles = tiles.filter(
+            (tile) => !pieces[tile.name].placed,
+        );
+        const [shapes, solvableBoard] = init(remainingTiles);
+        worker.postMessage({
+            MsgType: "start",
+            Shapes: JSON.stringify(shapes),
+            Board: JSON.stringify(solvableBoard),
+        });
+
+        // // Wait for the worker to finish solving
+        // await new Promise((resolve) => {
+        //     const onMessage = (event) => {
+        //         if (
+        //             event.data.MsgType === "solution" ||
+        //             event.data.MsgType === "finished"
+        //         ) {
+        //             worker.removeEventListener("message", onMessage);
+        //             resolve();
+        //         }
+        //     };
+        //     worker.addEventListener("message", onMessage);
+        // });
+
+        // if (solution !== null) {
+        //     solvable = "Solvable";
+        // } else {
+        //     // If not solvable, retry generating a random game
+        //     handleRandom();
+        // }
+    }
+
     $: {
-        if (board || pieces) {
+        if (board) {
             ranSolver = false;
         }
     }
@@ -376,6 +469,12 @@
                 handleSolve(tiles);
             }}>Solve</button
         >
+        <!-- <button
+            style="margin-left: 30px;"
+            on:click={() => {
+                handleRandom(tiles);
+            }}>Random Game</button
+        > -->
     </div>
 
     <h2>{solvable}</h2>

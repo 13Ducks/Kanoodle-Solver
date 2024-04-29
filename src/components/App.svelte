@@ -1,6 +1,7 @@
 <script>
   import { writable } from "svelte/store";
-  import Solver from "../components/Solver.svelte";
+  import Solver from "./Solver.svelte";
+  import Sidebar from "./Sidebar.svelte";
 
   const rows = 5;
   const cols = 11;
@@ -45,7 +46,7 @@
         [1, 1],
         [1, 0],
       ],
-      color: "#DCD8BA",
+      color: "#A3987F",
       placed: false,
     },
     N: {
@@ -71,7 +72,7 @@
         [1, 1],
         [1, 0],
       ],
-      color: "#FA001A",
+      color: "#B90006",
       placed: false,
     },
     U: {
@@ -98,7 +99,7 @@
         [1, 1, 1],
         [0, 1, 0],
       ],
-      color: "#D2D0CB",
+      color: "#7A8184",
       placed: false,
     },
     Y: {
@@ -165,7 +166,10 @@
     }
   }
 
+  let dragEvent = null;
+
   let draggedPiece = null;
+  let selectedPiece = null;
   let draggedPieceFromBoard = false;
 
   function handleDragStart(
@@ -180,24 +184,19 @@
 
     if (fromBoard && row !== null && col !== null) {
       // Find and remove all cells occupied by the piece on the board
-      const piece = $pieces[pieceName];
-      const pieceRows = piece.shape.length;
-      const pieceCols = piece.shape[0].length;
+      $pieces[pieceName].placed = false;
 
-      for (let i = 0; i < pieceRows; i++) {
-        for (let j = 0; j < pieceCols; j++) {
-          if (
-            piece.shape[i][j] === 1 &&
-            board[row + i] &&
-            board[row + i][col + j] === pieceName
-          ) {
-            board[row + i][col + j] = null;
+      for (let i = 0; i < board.length; i++) {
+        for (let j = 0; j < board[i].length; j++) {
+          if (board[i][j] === pieceName) {
+            board[i][j] = null;
           }
         }
       }
     }
 
-    event.dataTransfer.effectAllowed = "move";
+    const draggedPieceElement = document.querySelector(".piece-" + pieceName);
+    event.dataTransfer.setDragImage(draggedPieceElement, 0, 0);
   }
 
   function handleDragOver(event) {
@@ -228,15 +227,18 @@
       //   console.log(pieces)
       // }
 
-      // draggedPiece = null;
       // draggedPieceFromBoard = false;
+      draggedPiece = null;
       return;
     }
 
     // Check if the piece overlaps with existing pieces
     for (let i = 0; i < pieceRows; i++) {
       for (let j = 0; j < pieceCols; j++) {
-        if (piece.shape[i][j] === 1 && board[row + i][col + j] !== null) return;
+        if (piece.shape[i][j] === 1 && board[row + i][col + j] !== null) {
+          draggedPiece = null;
+          return;
+        }
       }
     }
 
@@ -282,6 +284,7 @@
       }
     }
   }
+
   function rotatePiece(piece) {
     const rows = piece.shape.length;
     const cols = piece.shape[0].length;
@@ -320,6 +323,12 @@
       rotatePiece(piece);
       return currentPieces;
     });
+
+    // if (draggedPiece === pieceName) {
+    //   const draggedPieceElement = document.querySelector(".piece-" + pieceName);
+    //   console.log(dragEvent);
+    //   dragEvent.dataTransfer.setDragImage(draggedPieceElement, 0, 0);
+    // }
   }
 
   function handleFlipClick(pieceName) {
@@ -329,9 +338,38 @@
       return currentPieces;
     });
   }
+
+  function handleKeyUp(event) {
+    if (draggedPiece) {
+      if (event.key === "r" || event.key === "R") {
+        handleRotateClick(draggedPiece);
+      } else if (event.key === "f" || event.key === "F") {
+        handleFlipClick(draggedPiece);
+      }
+    } else if (selectedPiece) {
+      if (event.key === "r" || event.key === "R") {
+        handleRotateClick(selectedPiece);
+      } else if (event.key === "f" || event.key === "F") {
+        handleFlipClick(selectedPiece);
+      }
+    }
+  }
+
+  function handleOnClick(event, pieceName) {
+    for (let cls of event.target.classList) {
+      if (cls.includes("piece") && !cls.includes("pieces")) {
+        if (pieceName !== undefined) selectedPiece = pieceName;
+        return;
+      }
+    }
+    selectedPiece = null;
+  }
 </script>
 
+<svelte:window on:keyup={handleKeyUp} on:click={handleOnClick} />
+
 <div class="full-app">
+  <Sidebar />
   <div class="board">
     {#each board as row, rowIndex}
       <div class="row">
@@ -341,6 +379,9 @@
             class="circle"
             class:hovered={hovered[rowIndex][colIndex]}
             style="background-color: {cell ? $pieces[cell].color : '#4c4a4a'};"
+            draggable={cell ? "true" : "false"}
+            on:dragstart={(event) =>
+              handleDragStart(event, cell, true, rowIndex, colIndex)}
             on:dragenter={(event) => handleDragEnter(event, rowIndex, colIndex)}
             on:dragleave={handleDragLeave}
             on:dragover={handleDragOver}
@@ -353,34 +394,36 @@
 
   <div class="pieces">
     {#each Object.entries($pieces) as [pieceName, piece]}
-      {#if !piece.placed}
-        <div class="piece-container">
-          <!-- svelte-ignore a11y-no-static-element-interactions -->
-          <div
-            class="piece"
-            draggable="true"
-            on:dragstart={(event) => handleDragStart(event, pieceName)}
-          >
-            {#each piece.shape as row}
-              <div class="piece-row">
-                {#each row as cell}
-                  <div
-                    class="piece-cell"
-                    style="background-color: {cell === 1
-                      ? piece.color
-                      : 'transparent'};"
-                  ></div>
-                {/each}
-              </div>
-            {/each}
-          </div>
-          <div class="piece-buttons">
-            <button on:click={() => handleRotateClick(pieceName)}>Rotate</button
-            >
-            <button on:click={() => handleFlipClick(pieceName)}>Flip</button>
-          </div>
+      <div class="piece-container">
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <div
+          class="piece piece-{pieceName}"
+          class:selected={selectedPiece === pieceName}
+          class:dragging={draggedPiece === pieceName}
+          class:placed={piece.placed}
+          draggable={!piece.placed}
+          on:dragstart={(event) => handleDragStart(event, pieceName)}
+          on:click={(event) => handleOnClick(event, pieceName)}
+        >
+          {#each piece.shape as row}
+            <div class="piece-row">
+              {#each row as cell}
+                <div
+                  class="piece-cell"
+                  style="background-color: {cell === 1
+                    ? piece.color
+                    : 'transparent'};"
+                ></div>
+              {/each}
+            </div>
+          {/each}
         </div>
-      {/if}
+        <div class="piece-buttons">
+          <button on:click={() => handleRotateClick(pieceName)}>Rotate</button>
+          <button on:click={() => handleFlipClick(pieceName)}>Flip</button>
+        </div>
+      </div>
     {/each}
   </div>
   <Solver {board} pieces={$pieces} bind:solution bind:request />
@@ -392,6 +435,12 @@
     flex-direction: column;
     gap: 20px;
     margin: 0 auto;
+  }
+
+  .title {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 10px;
   }
 
   .board {
@@ -434,6 +483,21 @@
   .piece {
     cursor: move;
     margin-bottom: 5px;
+    padding: 5px;
+    border: 2px solid transparent;
+  }
+
+  .piece.selected {
+    border-color: rgba(255, 255, 255, 0.7);
+  }
+
+  .piece.dragging {
+    border-color: transparent;
+  }
+
+  .piece.placed {
+    cursor: not-allowed;
+    opacity: 0.1;
   }
 
   .piece-row {

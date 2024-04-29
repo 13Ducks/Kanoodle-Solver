@@ -5,8 +5,10 @@ Online Kanoodle drag and drop UI with capabilities to check solvability, hint, a
 Feature checklist:
 - [x] Basic drag and drop UI
 - [x] Solve functionality
-- [ ] Ability to remove pieces
-- [ ] Keybinds for rotation
+- [x] Ability to remove pieces
+- [x] Keybinds for rotation
 - [ ] Random game generation 
+- [ ] Improve solving algorithm
+- [ ] Light mode
 
 Inspired by https://andywarduk.github.io/KanoodleJs
