@@ -59,7 +59,7 @@
         top: 0;
         left: 0;
         height: 100%;
-        width: 300px;
+        width: 350px;
         background-color: #4c4a4a;
         transition: transform 0.3s ease-in-out;
         transform: translateX(-100%);
@@ -80,7 +80,7 @@
     }
 
     .toggle-btn.open {
-        transform: translateX(250px);
+        transform: translateX(300px);
     }
 
     .sidebar-content {
