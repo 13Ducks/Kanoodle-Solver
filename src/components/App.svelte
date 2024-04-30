@@ -437,6 +437,10 @@
     margin: 0 auto;
   }
 
+  [draggable="true"] {
+    z-index: 1;
+  }
+
   .title {
     text-align: center;
     font-size: 2rem;
