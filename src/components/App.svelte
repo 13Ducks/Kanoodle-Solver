@@ -1,7 +1,17 @@
 <script>
+  import { onMount } from "svelte";
   import { writable } from "svelte/store";
+
+  import pkg from "mobile-drag-drop";
+  const { polyfill } = pkg;
+
   import Solver from "./Solver.svelte";
   import Sidebar from "./Sidebar.svelte";
+
+  onMount(() => {
+    polyfill({});
+    window.addEventListener("touchmove", function () {}, { passive: false });
+  });
 
   const rows = 5;
   const cols = 11;
