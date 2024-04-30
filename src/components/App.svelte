@@ -167,10 +167,8 @@
   }
 
   let dragEvent = null;
-
   let draggedPiece = null;
   let selectedPiece = null;
-  let draggedPieceFromBoard = false;
 
   function handleDragStart(
     event,
@@ -180,7 +178,6 @@
     col = null,
   ) {
     draggedPiece = pieceName;
-    draggedPieceFromBoard = fromBoard;
 
     if (fromBoard && row !== null && col !== null) {
       // Find and remove all cells occupied by the piece on the board
@@ -203,9 +200,11 @@
     event.preventDefault();
   }
 
-  function handleDrop(event, row, col) {
+  function handleDrop(event, row, col, selected = null) {
     event.preventDefault();
-    if (!draggedPiece) return;
+
+    let pieceToPlace = selected ? selected : draggedPiece;
+    if (!pieceToPlace) return;
 
     for (let row = 0; row < hovered.length; row++) {
       for (let col = 0; col < hovered[row].length; col++) {
@@ -213,30 +212,15 @@
       }
     }
 
-    const piece = $pieces[draggedPiece];
+    const piece = $pieces[pieceToPlace];
     const pieceRows = piece.shape.length;
     const pieceCols = piece.shape[0].length;
-
-    // Check if the drop target is outside the board
-    if (row < 0 || row >= rows || col < 0 || col >= cols) {
-      // if (draggedPieceFromBoard) {
-      //   // Add the piece back to the pieces store if it was dragged from the board
-      //   pieces.update(currentPieces => {
-      //     return { ...currentPieces, [draggedPiece]: piece };
-      //   });
-      //   console.log(pieces)
-      // }
-
-      // draggedPieceFromBoard = false;
-      draggedPiece = null;
-      return;
-    }
 
     // Check if the piece overlaps with existing pieces
     for (let i = 0; i < pieceRows; i++) {
       for (let j = 0; j < pieceCols; j++) {
         if (piece.shape[i][j] === 1 && board[row + i][col + j] !== null) {
-          draggedPiece = null;
+          pieceToPlace = null;
           return;
         }
       }
@@ -246,17 +230,18 @@
     for (let i = 0; i < pieceRows; i++) {
       for (let j = 0; j < pieceCols; j++) {
         if (piece.shape[i][j] === 1) {
-          board[row + i][col + j] = draggedPiece;
+          board[row + i][col + j] = pieceToPlace;
         }
       }
     }
 
     pieces.update((currentPieces) => {
-      currentPieces[draggedPiece].placed = true;
+      currentPieces[pieceToPlace].placed = true;
       return currentPieces;
     });
 
     draggedPiece = null;
+    selectedPiece = null;
   }
 
   function handleDragEnter(event, row, col) {
@@ -283,6 +268,12 @@
         hovered[row][col] = false;
       }
     }
+  }
+
+  function handleOnClickBoard(event, row, col) {
+    event.preventDefault();
+    if (selectedPiece === null) return;
+    handleDrop(event, row, col, selectedPiece);
   }
 
   function rotatePiece(piece) {
@@ -359,6 +350,7 @@
     for (let cls of event.target.classList) {
       if (cls.includes("piece") && !cls.includes("pieces")) {
         if (pieceName !== undefined) selectedPiece = pieceName;
+
         return;
       }
     }
@@ -375,6 +367,7 @@
       <div class="row">
         {#each row as cell, colIndex}
           <!-- svelte-ignore a11y-no-static-element-interactions -->
+          <!-- svelte-ignore a11y-click-events-have-key-events -->
           <div
             class="circle"
             class:hovered={hovered[rowIndex][colIndex]}
@@ -386,6 +379,7 @@
             on:dragleave={handleDragLeave}
             on:dragover={handleDragOver}
             on:drop={(event) => handleDrop(event, rowIndex, colIndex)}
+            on:click={(event) => handleOnClickBoard(event, rowIndex, colIndex)}
           ></div>
         {/each}
       </div>
@@ -404,6 +398,7 @@
           class:placed={piece.placed}
           draggable={!piece.placed}
           on:dragstart={(event) => handleDragStart(event, pieceName)}
+          on:dragend={() => (draggedPiece = null)}
           on:click={(event) => handleOnClick(event, pieceName)}
         >
           {#each piece.shape as row}
