@@ -63,6 +63,7 @@
         background-color: #4c4a4a;
         transition: transform 0.3s ease-in-out;
         transform: translateX(-100%);
+        z-index: 3;
     }
 
     .sidebar.open {
@@ -74,7 +75,7 @@
         top: 10px;
         padding: 5px 10px;
         font-size: 12px;
-        z-index: 1;
+        z-index: 4;
         transition: transform 0.3s ease-in-out;
         transform: translateX(0);
     }
