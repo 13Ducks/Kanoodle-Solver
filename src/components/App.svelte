@@ -7,6 +7,7 @@
 
   import Solver from "./Solver.svelte";
   import Sidebar from "./Sidebar.svelte";
+  import ThemeSwitch from "./ThemeSwitch.svelte";
 
   onMount(() => {
     polyfill({});
@@ -372,6 +373,7 @@
 
 <div class="full-app">
   <Sidebar />
+  <ThemeSwitch />
   <div class="board">
     {#each board as row, rowIndex}
       <div class="row">
@@ -381,7 +383,9 @@
           <div
             class="circle"
             class:hovered={hovered[rowIndex][colIndex]}
-            style="background-color: {cell ? $pieces[cell].color : '#4c4a4a'};"
+            style="background-color: {cell
+              ? $pieces[cell].color
+              : 'var(--piece-color)'};"
             draggable={cell ? "true" : "false"}
             on:dragstart={(event) =>
               handleDragStart(event, cell, true, rowIndex, colIndex)}
@@ -497,7 +501,7 @@
   }
 
   .piece.selected {
-    border-color: rgba(255, 255, 255, 0.7);
+    border-color: var(--button-text-color);
   }
 
   .piece.dragging {

@@ -1,16 +1,32 @@
 :root {
+  --bg-color: #242424;
+  --text-color: rgba(255, 255, 255, 0.87);
+  --button-bg-color: #1a1a1a;
+  --button-text-color: rgba(255, 255, 255, 0.87);
+  --piece-color: #4c4a4a;
+  color-scheme: dark;
+
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  
+  color: var(--text-color);;
+  background-color: var(--bg-color);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.light-mode {
+  --bg-color: #ffffff;
+  --text-color: rgba(0, 0, 0, 1);
+  --button-bg-color: #f9f9f9;
+  --button-text-color: rgba(0, 0, 0, 1);
+  --piece-color: #e1e1e1;
+  color-scheme: light;
 }
 
 a {
@@ -29,8 +45,8 @@ main {
 }
 
 body {
-  background-color: #242424;
-  color: rgba(255, 255, 255, 0.87);
+  background-color: var(--bg-color);
+  color: var(--text-color);
   margin: 0;
   display: flex;
   place-items: center;
@@ -61,7 +77,7 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--button-bg-color);
   cursor: pointer;
   transition: border-color 0.25s;
 }

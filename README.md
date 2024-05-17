@@ -7,8 +7,8 @@ Feature checklist:
 - [x] Solve functionality
 - [x] Ability to remove pieces
 - [x] Keybinds for rotation
-- [ ] Random game generation 
+- [ ] Random game generation
 - [ ] Improve solving algorithm
-- [ ] Light mode
+- [x] Light mode
 
 Inspired by https://andywarduk.github.io/KanoodleJs

@@ -61,7 +61,7 @@
         left: 0;
         height: 100%;
         width: 350px;
-        background-color: #4c4a4a;
+        background-color: var(--piece-color);
         transition: transform 0.3s ease-in-out;
         transform: translateX(-100%);
         z-index: 3;
