@@ -7,6 +7,8 @@
     let worker = null;
     let ranSolver = false;
     let solvable = "";
+    let solvable_dot_cnt = 1;
+    let solvable_interval = null;
 
     export let solution = null;
     export let request = "";
@@ -304,12 +306,16 @@
                 let board = JSON.parse(Data.Board).Layout;
                 ranSolver = true;
                 solution = board;
+                clearInterval(solvable_interval);
+                solvable_dot_cnt = 1;
                 solvable = "Solvable";
                 break;
 
             case "finished":
                 ranSolver = true;
                 solution = null;
+                clearInterval(solvable_interval);
+                solvable_dot_cnt = 1;
                 solvable = "Not Solvable";
                 break;
         }
@@ -351,7 +357,11 @@
                 solvable = "Not Solvable";
             }
         } else {
-            solvable = "Checking...";
+            solvable = "Checking";
+            solvable_interval = setInterval(() => {
+                solvable = "Checking" + ".".repeat(solvable_dot_cnt);
+                solvable_dot_cnt = (solvable_dot_cnt + 1) % 4;
+            }, 400);
             startWorker(tiles);
         }
     }
@@ -359,7 +369,11 @@
     function handleHint() {
         request = "hint";
         if (!ranSolver) {
-            solvable = "Solving...";
+            solvable = "Solving";
+            solvable_interval = setInterval(() => {
+                solvable = "Solving" + ".".repeat(solvable_dot_cnt);
+                solvable_dot_cnt = (solvable_dot_cnt + 1) % 4;
+            }, 400);
             startWorker(tiles);
         }
     }
@@ -367,7 +381,11 @@
     function handleSolve() {
         request = "solve";
         if (!ranSolver) {
-            solvable = "Solving...";
+            solvable = "Solving";
+            solvable_interval = setInterval(() => {
+                solvable = "Solving" + ".".repeat(solvable_dot_cnt);
+                solvable_dot_cnt = (solvable_dot_cnt + 1) % 4;
+            }, 400);
             startWorker(tiles);
         }
     }
