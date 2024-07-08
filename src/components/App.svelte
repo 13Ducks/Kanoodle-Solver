@@ -432,6 +432,7 @@
             on:dragleave={handleDragLeave}
             on:dragover={handleDragOver}
             on:drop={(event) => handleDrop(event, rowIndex, colIndex)}
+            on:dragend={() => (draggedPiece = null)}
             on:click={(event) => handleOnClickBoard(event, rowIndex, colIndex)}
           ></div>
         {/each}
