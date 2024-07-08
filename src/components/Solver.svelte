@@ -142,6 +142,13 @@
         solvable = "Good luck!";
     }
 
+    function handleReset() {
+        request = "reset";
+        solvable = "";
+        solution = null;
+        ranSolver = false;
+    }
+
     $: {
         if (board) {
             ranSolver = false;
@@ -171,6 +178,11 @@
             on:click={() => {
                 handleRandom();
             }}>Random Game</button
+        >
+        <button
+            on:click={() => {
+                handleReset();
+            }}>Reset</button
         >
     </div>
 

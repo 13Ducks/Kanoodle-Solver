@@ -5,6 +5,8 @@
   import pkg from "mobile-drag-drop";
   const { polyfill } = pkg;
 
+  import confetti from "canvas-confetti";
+
   import Solver from "./Solver.svelte";
   import Sidebar from "./Sidebar.svelte";
   import ThemeSwitch from "./ThemeSwitch.svelte";
@@ -26,6 +28,7 @@
 
   let solution = null;
   let request = "";
+  let usedHintOrSolver = false;
 
   let pieces = writable({
     l: {
@@ -147,7 +150,7 @@
         }
         return currentPieces;
       });
-
+      usedHintOrSolver = true;
       for (let i = 0; i < solution.length; i++) {
         for (let j = 0; j < solution[i].length; j++) {
           board[i][j] = solution[i][j];
@@ -171,7 +174,7 @@
           }
         }
       }
-
+      usedHintOrSolver = true;
       pieces.update((currentPieces) => {
         currentPieces[hintPiece].placed = true;
         return currentPieces;
@@ -202,7 +205,7 @@
           }
         }
       }
-
+      usedHintOrSolver = false;
       pieces.update((currentPieces) => {
         for (let piece in currentPieces) {
           if (chosen.includes(piece)) {
@@ -213,10 +216,56 @@
         }
         return currentPieces;
       });
+    } else if (request == "reset") {
+      board = Array(rows)
+        .fill(null)
+        .map(() => Array(cols).fill(null));
+      usedHintOrSolver = false;
+      pieces.update((currentPieces) => {
+        for (let piece in currentPieces) {
+          currentPieces[piece].placed = false;
+        }
+        return currentPieces;
+      });
     }
   }
 
-  let dragEvent = null;
+  function isPuzzleComplete() {
+    for (let row of board) {
+      for (let cell of row) {
+        if (cell === null) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  function celebrateCompletion() {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
+
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => {
+        confetti({
+          particleCount: 50,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+        });
+        confetti({
+          particleCount: 50,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+        });
+      }, i * 250);
+    }
+  }
+
   let draggedPiece = null;
   let selectedPiece = null;
 
@@ -289,6 +338,11 @@
       currentPieces[pieceToPlace].placed = true;
       return currentPieces;
     });
+
+    if (isPuzzleComplete() && !usedHintOrSolver) {
+      celebrateCompletion();
+      usedHintOrSolver = true;
+    }
 
     draggedPiece = null;
     selectedPiece = null;
