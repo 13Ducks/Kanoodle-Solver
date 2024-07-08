@@ -150,7 +150,7 @@
 
       for (let i = 0; i < solution.length; i++) {
         for (let j = 0; j < solution[i].length; j++) {
-          board[j][i] = solution[i][j];
+          board[i][j] = solution[i][j];
         }
       }
     } else if (solution !== null && request == "hint") {
@@ -162,16 +162,55 @@
         }
       }
 
+      if (hintPiece === null) break $;
+
       for (let i = 0; i < solution.length; i++) {
         for (let j = 0; j < solution[i].length; j++) {
           if (solution[i][j] === hintPiece) {
-            board[j][i] = hintPiece;
+            board[i][j] = hintPiece;
           }
         }
       }
 
       pieces.update((currentPieces) => {
         currentPieces[hintPiece].placed = true;
+        return currentPieces;
+      });
+    } else if (solution !== null && request == "random") {
+      let options = [
+        "l",
+        "P",
+        "L",
+        "Y",
+        "N",
+        "i",
+        "V",
+        "W",
+        "U",
+        "I",
+        "S",
+        "X",
+      ];
+      let chosen = options.sort(() => Math.random() - 0.5).slice(0, 2);
+
+      for (let i = 0; i < solution.length; i++) {
+        for (let j = 0; j < solution[i].length; j++) {
+          if (chosen.includes(solution[i][j])) {
+            board[i][j] = solution[i][j];
+          } else {
+            board[i][j] = null;
+          }
+        }
+      }
+
+      pieces.update((currentPieces) => {
+        for (let piece in currentPieces) {
+          if (chosen.includes(piece)) {
+            currentPieces[piece].placed = true;
+          } else {
+            currentPieces[piece].placed = false;
+          }
+        }
         return currentPieces;
       });
     }
@@ -435,7 +474,7 @@
       </div>
     {/each}
   </div>
-  <Solver {board} pieces={$pieces} bind:solution bind:request />
+  <Solver {board} bind:solution bind:request />
 </div>
 
 <style>

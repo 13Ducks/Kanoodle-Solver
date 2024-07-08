@@ -33,12 +33,16 @@
                     click the "Hint" button to place one piece, or click the
                     "Solve" button to fully solve.
                 </p>
+                <p>
+                    5. Click the "Random Game" button to generate a random
+                    solvable board with 2 pieces.
+                </p>
 
                 <br />
                 <p>
                     Inspired by <a
-                        href="https://andywarduk.github.io/KanoodleJs"
-                        >https://andywarduk.github.io/KanoodleJs</a
+                        href="https://www.lutanho.net/play/noodle_solver.html"
+                        >Noodle Solver</a
                     >
                 </p>
             </div>
