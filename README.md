@@ -7,8 +7,9 @@ Feature checklist:
 - [x] Solve functionality
 - [x] Ability to remove pieces
 - [x] Keybinds for rotation
-- [ ] Random game generation
-- [ ] Improve solving algorithm
+- [x] Random game generation
+- [x] Improve solving algorithm
 - [x] Light mode
+- [x] Timer
 
-Inspired by https://andywarduk.github.io/KanoodleJs
+Inspired by [https://andywarduk.github.io/KanoodleJs](https://www.lutanho.net/play/noodle_solver.html)
