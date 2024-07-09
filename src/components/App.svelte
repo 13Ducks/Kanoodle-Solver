@@ -506,7 +506,6 @@
 
 <div class="full-app">
   <Sidebar />
-  <ThemeSwitch />
   <div class="timer-container">
     {#if timerEnabled}
       <div class="timer">
@@ -514,6 +513,7 @@
       </div>
     {/if}
     <TimerSwitch bind:timerEnabled />
+    <ThemeSwitch />
   </div>
   <div class="board">
     {#each board as row, rowIndex}
@@ -685,7 +685,6 @@
     right: 5rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
   }
 
   .timer {

@@ -29,9 +29,6 @@
 
 <style>
     button {
-        position: fixed;
-        top: 1rem;
-        right: 1rem;
         background: none;
         border: none;
         font-size: 1.5rem;

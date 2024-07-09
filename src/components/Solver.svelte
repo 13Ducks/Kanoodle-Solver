@@ -1,5 +1,4 @@
 <script>
-    import { onMount } from "svelte";
     import { startSolve } from "./NoodleSolver";
 
     const rows = 11;

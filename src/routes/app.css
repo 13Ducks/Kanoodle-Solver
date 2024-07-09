@@ -10,8 +10,8 @@
   line-height: 1.5;
   font-weight: 400;
 
-  
-  color: var(--text-color);;
+
+  color: var(--text-color);
   background-color: var(--bg-color);
 
   font-synthesis: none;
@@ -21,11 +21,11 @@
 }
 
 .light-mode {
-  --bg-color: #ffffff;
-  --text-color: rgba(0, 0, 0, 1);
-  --button-bg-color: #f9f9f9;
-  --button-text-color: rgba(0, 0, 0, 1);
-  --piece-color: #e1e1e1;
+  --bg-color: #f5f0e8;
+  --text-color: #4a4a4a;
+  --button-bg-color: #e8e0d0;
+  --button-text-color: #4a4a4a;
+  --piece-color: #d0c8b8;
   color-scheme: light;
 }
 
@@ -34,12 +34,13 @@ a {
   color: #646cff;
   text-decoration: inherit;
 }
+
 a:hover {
   color: #535bf2;
 }
 
 main {
-  
+
   width: 100vw;
   height: 100vh;
 }
@@ -81,9 +82,11 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:hover {
   border-color: #646cff;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
