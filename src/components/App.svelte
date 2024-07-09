@@ -10,10 +10,12 @@
   import Solver from "./Solver.svelte";
   import Sidebar from "./Sidebar.svelte";
   import ThemeSwitch from "./ThemeSwitch.svelte";
+  import TimerSwitch from "./TimerSwitch.svelte";
 
   onMount(() => {
     polyfill({});
     window.addEventListener("touchmove", function () {}, { passive: false });
+    startTimer();
   });
 
   const rows = 5;
@@ -29,6 +31,11 @@
   let solution = null;
   let request = "";
   let usedHintOrSolver = false;
+
+  let timerEnabled = false;
+  let timerStart = null;
+  let timerInterval = null;
+  let elapsedTime = 0;
 
   let pieces = writable({
     l: {
@@ -150,6 +157,7 @@
         }
         return currentPieces;
       });
+      stopTimer();
       usedHintOrSolver = true;
       for (let i = 0; i < solution.length; i++) {
         for (let j = 0; j < solution[i].length; j++) {
@@ -163,6 +171,16 @@
           hintPiece = piece;
           break;
         }
+      }
+
+      let notPlaced = 0;
+      for (let piece in $pieces) {
+        if (!$pieces[piece].placed) {
+          notPlaced++;
+        }
+      }
+      if (notPlaced <= 1) {
+        stopTimer();
       }
 
       if (hintPiece === null) break $;
@@ -206,6 +224,7 @@
         }
       }
       usedHintOrSolver = false;
+      startTimer();
       pieces.update((currentPieces) => {
         for (let piece in currentPieces) {
           if (chosen.includes(piece)) {
@@ -221,6 +240,7 @@
         .fill(null)
         .map(() => Array(cols).fill(null));
       usedHintOrSolver = false;
+      startTimer();
       pieces.update((currentPieces) => {
         for (let piece in currentPieces) {
           currentPieces[piece].placed = false;
@@ -339,9 +359,12 @@
       return currentPieces;
     });
 
-    if (isPuzzleComplete() && !usedHintOrSolver) {
-      celebrateCompletion();
-      usedHintOrSolver = true;
+    if (isPuzzleComplete()) {
+      stopTimer();
+      if (!usedHintOrSolver) {
+        celebrateCompletion();
+        usedHintOrSolver = true;
+      }
     }
 
     draggedPiece = null;
@@ -418,12 +441,6 @@
       rotatePiece(piece);
       return currentPieces;
     });
-
-    // if (draggedPiece === pieceName) {
-    //   const draggedPieceElement = document.querySelector(".piece-" + pieceName);
-    //   console.log(dragEvent);
-    //   dragEvent.dataTransfer.setDragImage(draggedPieceElement, 0, 0);
-    // }
   }
 
   function handleFlipClick(pieceName) {
@@ -460,6 +477,29 @@
     }
     selectedPiece = null;
   }
+
+  function startTimer() {
+    elapsedTime = 0;
+    timerStart = Date.now();
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      elapsedTime = Date.now() - timerStart;
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+  }
+
+  function formatTime(milliseconds) {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  }
 </script>
 
 <svelte:window on:keyup={handleKeyUp} on:click={handleOnClick} />
@@ -467,6 +507,14 @@
 <div class="full-app">
   <Sidebar />
   <ThemeSwitch />
+  <div class="timer-container">
+    {#if timerEnabled}
+      <div class="timer">
+        {formatTime(elapsedTime)}
+      </div>
+    {/if}
+    <TimerSwitch bind:timerEnabled />
+  </div>
   <div class="board">
     {#each board as row, rowIndex}
       <div class="row">
@@ -629,5 +677,19 @@
   .piece-buttons button {
     padding: 5px 10px;
     font-size: 12px;
+  }
+
+  .timer-container {
+    position: fixed;
+    top: 1rem;
+    right: 5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .timer {
+    font-size: 1rem;
+    font-weight: bold;
   }
 </style>
