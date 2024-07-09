@@ -12,4 +12,4 @@ Feature checklist:
 - [x] Light mode
 - [x] Timer
 
-Inspired by [https://andywarduk.github.io/KanoodleJs](https://www.lutanho.net/play/noodle_solver.html)
+Inspired by [https://www.lutanho.net/play/noodle_solver.html](https://www.lutanho.net/play/noodle_solver.html)
