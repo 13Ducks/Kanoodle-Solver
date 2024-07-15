@@ -69,6 +69,8 @@
         transition: transform 0.3s ease-in-out;
         transform: translateX(-100%);
         z-index: 3;
+        display: flex;
+        flex-direction: column;
     }
 
     .sidebar.open {
@@ -91,5 +93,19 @@
 
     .sidebar-content {
         padding: 20px;
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+
+    /* Hide scrollbar when content fits */
+    .sidebar-content::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
+    }
+
+    @supports (overflow: overlay) {
+        .sidebar-content {
+            overflow-y: overlay;
+        }
     }
 </style>

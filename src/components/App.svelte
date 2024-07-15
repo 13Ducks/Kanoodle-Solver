@@ -506,14 +506,16 @@
 
 <div class="full-app">
   <Sidebar />
-  <div class="timer-container">
-    {#if timerEnabled}
-      <div class="timer">
-        {formatTime(elapsedTime)}
-      </div>
-    {/if}
-    <TimerSwitch bind:timerEnabled />
-    <ThemeSwitch />
+  <div class="controls">
+    <div class="timer-container">
+      {#if timerEnabled}
+        <div class="timer">
+          {formatTime(elapsedTime)}
+        </div>
+      {/if}
+      <TimerSwitch bind:timerEnabled />
+      <ThemeSwitch />
+    </div>
   </div>
   <div class="board">
     {#each board as row, rowIndex}
@@ -679,10 +681,14 @@
     font-size: 12px;
   }
 
-  .timer-container {
-    position: fixed;
+  .controls {
+    position: absolute;
     top: 1rem;
-    right: 5rem;
+    right: 1rem;
+    z-index: 10;
+  }
+
+  .timer-container {
     display: flex;
     align-items: center;
   }
@@ -690,5 +696,24 @@
   .timer {
     font-size: 1rem;
     font-weight: bold;
+  }
+
+  @media (max-width: 768px) {
+    .full-app {
+      padding-top: 3rem;
+    }
+
+    .controls {
+      position: fixed;
+      top: 0.5rem;
+      right: 0.5rem;
+      background-color: var(--background-color);
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+    }
+
+    .board {
+      margin-top: 1rem;
+    }
   }
 </style>
