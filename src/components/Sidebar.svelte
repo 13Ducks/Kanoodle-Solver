@@ -20,8 +20,8 @@
             <div class="sidebar-content">
                 <h2>Kanoodle</h2>
                 <p>
-                    1. Drag and drop the pieces onto the board. You can also
-                    drag pieces already on the board.
+                    1. Drag and drop or click to move the pieces onto the board.
+                    You can also drag pieces already on the board.
                 </p>
                 <p>
                     2. Rotate and flip the pieces using the buttons or keyboard

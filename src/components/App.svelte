@@ -685,7 +685,7 @@
     position: absolute;
     top: 1rem;
     right: 1rem;
-    z-index: 10;
+    z-index: 2;
   }
 
   .timer-container {
