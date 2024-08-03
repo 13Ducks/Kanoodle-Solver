@@ -4,7 +4,6 @@
     const rows = 11;
     const cols = 5;
 
-    let ranSolver = false;
     let solvable = "";
     let solvable_dot_cnt = 1;
     let solvable_interval = null;
@@ -58,7 +57,6 @@
         }
 
         let solvedBoard = startSolve(boardToUse);
-        ranSolver = true;
         clearInterval(solvable_interval);
         solvable_dot_cnt = 1;
 
@@ -83,47 +81,36 @@
 
     function handleSolvable() {
         request = "solvable";
-        if (ranSolver) {
-            if (solution !== null) {
-                solvable = "Solvable";
-            } else {
-                solvable = "Not Solvable";
-            }
-        } else {
-            solvable = "Checking";
-            solvable_interval = setInterval(() => {
-                solvable = "Checking" + ".".repeat(solvable_dot_cnt);
-                solvable_dot_cnt = (solvable_dot_cnt + 1) % 4;
-            }, 400);
 
-            runSolver(board);
-        }
+        solvable = "Checking";
+        solvable_interval = setInterval(() => {
+            solvable = "Checking" + ".".repeat(solvable_dot_cnt);
+            solvable_dot_cnt = (solvable_dot_cnt + 1) % 4;
+        }, 400);
+
+        runSolver(board);
     }
 
     function handleHint() {
         request = "hint";
-        if (!ranSolver) {
-            solvable = "Solving";
-            solvable_interval = setInterval(() => {
-                solvable = "Solving" + ".".repeat(solvable_dot_cnt);
-                solvable_dot_cnt = (solvable_dot_cnt + 1) % 4;
-            }, 400);
+        solvable = "Solving";
+        solvable_interval = setInterval(() => {
+            solvable = "Solving" + ".".repeat(solvable_dot_cnt);
+            solvable_dot_cnt = (solvable_dot_cnt + 1) % 4;
+        }, 400);
 
-            runSolver(board);
-        }
+        runSolver(board);
     }
 
     function handleSolve() {
         request = "solve";
-        if (!ranSolver) {
-            solvable = "Solving";
-            solvable_interval = setInterval(() => {
-                solvable = "Solving" + ".".repeat(solvable_dot_cnt);
-                solvable_dot_cnt = (solvable_dot_cnt + 1) % 4;
-            }, 400);
+        solvable = "Solving";
+        solvable_interval = setInterval(() => {
+            solvable = "Solving" + ".".repeat(solvable_dot_cnt);
+            solvable_dot_cnt = (solvable_dot_cnt + 1) % 4;
+        }, 400);
 
-            runSolver(board);
-        }
+        runSolver(board);
     }
 
     function handleRandom() {
@@ -144,14 +131,7 @@
     function handleReset() {
         request = "reset";
         solvable = "";
-        solution = null;
-        ranSolver = false;
-    }
-
-    $: {
-        if (board) {
-            ranSolver = false;
-        }
+        solution = [];
     }
 </script>
 

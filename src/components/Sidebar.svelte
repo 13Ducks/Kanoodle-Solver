@@ -45,6 +45,12 @@
                         >Noodle Solver</a
                     >
                 </p>
+                <p>
+                    <a
+                        href="mailto:kanoodle@aaryan.dev?subject=Kanoodle%20Feedback"
+                        >Contact</a
+                    > me for any feature requests.
+                </p>
             </div>
         {/if}
     </div>
