@@ -184,6 +184,33 @@ class NoodleSolver {
   }
 }
 
+function checkObviousFail(board) {
+  const boardClone = board.map((row) => row.slice());
+  const m = board.length;
+  const n = board[0].length;
+
+  function dfs(i, j) {
+    if (i >= 0 && i < m && j >= 0 && j < n && boardClone[i][j] === null) {
+      boardClone[i][j] = 0;
+      return 1 + dfs(i - 1, j) + dfs(i, j + 1) + dfs(i + 1, j) + dfs(i, j - 1);
+    }
+    return 0;
+  }
+
+  const areas = [];
+  for (let i = 0; i < m; i++) {
+    for (let j = 0; j < n; j++) {
+      if (boardClone[i][j] === null) {
+        areas.push(dfs(i, j));
+      }
+    }
+  }
+
+  // no piece smaller than 3 so must be impossible
+  if (Math.min(...areas) <= 2) return true;
+  return false;
+}
+
 export function startSolve(gridState, maxSolutions = -1) {
   let tt = "";
   for (let jj = 0; jj < 5; jj++) {
@@ -192,9 +219,8 @@ export function startSolve(gridState, maxSolutions = -1) {
       tt += Letters.charAt(gridState[ii][jj]);
     }
   }
-
   const ss = new NoodleSolver();
-  if (ss.Init(tt, maxSolutions)) {
+  if (!checkObviousFail(gridState) && ss.Init(tt, maxSolutions)) {
     const rr = ss.Solve(0, 0, maxSolutions);
     if (rr) {
       const solvedGrid = [];
