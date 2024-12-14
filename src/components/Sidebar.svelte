@@ -35,7 +35,8 @@
                 </p>
                 <p>
                     5. Click the "Random Game" button to generate a random
-                    solvable board with 2 pieces.
+                    solvable board with 2 pieces. You can use the dropdown to
+                    select the number of pieces.
                 </p>
 
                 <br />

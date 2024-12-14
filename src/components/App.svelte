@@ -197,7 +197,7 @@
         currentPieces[hintPiece].placed = true;
         return currentPieces;
       });
-    } else if (solution !== null && request == "random") {
+    } else if (solution !== null && request.startsWith("random")) {
       let options = [
         "l",
         "P",
@@ -212,7 +212,10 @@
         "S",
         "X",
       ];
-      let chosen = options.sort(() => Math.random() - 0.5).slice(0, 2);
+      let numRandomPieces = parseInt(request.split("-")[1]);
+      let chosen = options
+        .sort(() => Math.random() - 0.5)
+        .slice(0, numRandomPieces);
 
       for (let i = 0; i < solution.length; i++) {
         for (let j = 0; j < solution[i].length; j++) {

@@ -1,9 +1,14 @@
 <script>
+    import { onMount } from "svelte";
     import { startSolve } from "./NoodleSolver";
 
     const rows = 11;
     const cols = 5;
 
+    let randomButtonGroup;
+    let isRandomMenuOpen = false;
+
+    let randomPieceCount = 2;
     let solvable = "";
     let solvable_dot_cnt = 1;
     let solvable_interval = null;
@@ -41,6 +46,29 @@
         11: "S",
         12: "X",
     };
+
+    onMount(() => {
+        const handleClickOutside = (event) => {
+            if (
+                isRandomMenuOpen &&
+                randomButtonGroup &&
+                !randomButtonGroup.contains(event.target)
+            ) {
+                isRandomMenuOpen = false;
+            }
+        };
+
+        window.addEventListener("click", handleClickOutside);
+
+        return () => {
+            window.removeEventListener("click", handleClickOutside);
+        };
+    });
+
+    function toggleRandomMenu(event) {
+        event.stopPropagation();
+        isRandomMenuOpen = !isRandomMenuOpen;
+    }
 
     function transpose(matrix) {
         return matrix[0].map((col, i) => matrix.map((row) => row[i]));
@@ -114,7 +142,7 @@
     }
 
     function handleRandom() {
-        request = "random";
+        request = `random-${randomPieceCount}`;
         solvable = "Randomizing";
         solvable_interval = setInterval(() => {
             solvable = "Randomizing" + ".".repeat(solvable_dot_cnt);
@@ -136,33 +164,43 @@
 </script>
 
 <div class="solve">
-    <div>
-        <button
-            on:click={() => {
-                handleSolvable();
-            }}>Solvable?</button
-        >
-        <button
-            on:click={() => {
-                handleHint();
-            }}>Hint</button
-        >
-        <button
-            on:click={() => {
-                handleSolve();
-            }}>Solve</button
-        >
-        <button
-            style="margin-left: 30px;"
-            on:click={() => {
-                handleRandom();
-            }}>Random Game</button
-        >
-        <button
-            on:click={() => {
-                handleReset();
-            }}>Reset</button
-        >
+    <div class="button-container">
+        <button on:click={handleSolvable}>Solvable?</button>
+        <button on:click={handleHint}>Hint</button>
+        <button on:click={handleSolve}>Solve</button>
+
+        <div class="random-button-group" bind:this={randomButtonGroup}>
+            <button on:click={handleRandom} class="random-main"
+                >Random Game</button
+            >
+            <div class="separator"></div>
+            <button
+                class="dropdown-toggle"
+                on:click={toggleRandomMenu}
+                class:active={isRandomMenuOpen}
+            >
+                ▼
+            </button>
+
+            {#if isRandomMenuOpen}
+                <div class="random-dropdown">
+                    <div class="slider-container">
+                        <span class="piece-count"
+                            >Pieces: {randomPieceCount}</span
+                        >
+                        <input
+                            type="range"
+                            min="1"
+                            max="6"
+                            bind:value={randomPieceCount}
+                            class="piece-slider"
+                        />
+                    </div>
+                </div>
+            {/if}
+        </div>
+
+        <button on:click={handleReset}>Reset</button>
     </div>
 
     <h2>{solvable}</h2>
@@ -174,5 +212,64 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
+    }
+
+    .button-container {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .random-button-group {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+    }
+
+    .random-main {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        margin: 0;
+    }
+
+    .dropdown-toggle {
+        padding: 0 8px;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .separator {
+        width: 1px;
+        background-color: var(--text-color);
+        margin: 0;
+    }
+
+    .random-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: var(--button-bg-color);
+        border: 1px solid var(--text-color);
+        border-radius: 4px;
+        padding: 12px;
+        margin-top: 4px;
+        z-index: 100;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .slider-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .piece-count {
+        font-size: 14px;
+    }
+
+    .piece-slider {
+        width: 150px;
     }
 </style>
