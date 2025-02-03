@@ -165,42 +165,45 @@
 
 <div class="solve">
     <div class="button-container">
-        <button on:click={handleSolvable}>Solvable?</button>
-        <button on:click={handleHint}>Hint</button>
-        <button on:click={handleSolve}>Solve</button>
-
-        <div class="random-button-group" bind:this={randomButtonGroup}>
-            <button on:click={handleRandom} class="random-main"
-                >Random Game</button
-            >
-            <div class="separator"></div>
-            <button
-                class="dropdown-toggle"
-                on:click={toggleRandomMenu}
-                class:active={isRandomMenuOpen}
-            >
-                ▼
-            </button>
-
-            {#if isRandomMenuOpen}
-                <div class="random-dropdown">
-                    <div class="slider-container">
-                        <span class="piece-count"
-                            >Pieces: {randomPieceCount}</span
-                        >
-                        <input
-                            type="range"
-                            min="1"
-                            max="6"
-                            bind:value={randomPieceCount}
-                            class="piece-slider"
-                        />
-                    </div>
-                </div>
-            {/if}
+        <div class="button-row">
+            <button on:click={handleSolvable}>Solvable?</button>
+            <button on:click={handleHint}>Hint</button>
+            <button on:click={handleSolve}>Solve</button>
         </div>
 
-        <button on:click={handleReset}>Reset</button>
+        <div class="button-row">
+            <div class="random-button-group" bind:this={randomButtonGroup}>
+                <button on:click={handleRandom} class="random-main"
+                    >Random Game</button
+                >
+                <div class="separator"></div>
+                <button
+                    class="dropdown-toggle"
+                    on:click={toggleRandomMenu}
+                    class:active={isRandomMenuOpen}
+                >
+                    ▼
+                </button>
+
+                {#if isRandomMenuOpen}
+                    <div class="random-dropdown">
+                        <div class="slider-container">
+                            <span class="piece-count"
+                                >Pieces: {randomPieceCount}</span
+                            >
+                            <input
+                                type="range"
+                                min="1"
+                                max="6"
+                                bind:value={randomPieceCount}
+                                class="piece-slider"
+                            />
+                        </div>
+                    </div>
+                {/if}
+            </div>
+            <button on:click={handleReset}>Reset</button>
+        </div>
     </div>
 
     <h2>{solvable}</h2>
@@ -212,12 +215,22 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
+        padding-top: 20px;
     }
 
     .button-container {
         display: flex;
+        flex-direction: column;
         gap: 8px;
         align-items: center;
+        width: 100%;
+    }
+
+    .button-row {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
     }
 
     .random-button-group {
@@ -271,5 +284,30 @@
 
     .piece-slider {
         width: 150px;
+    }
+
+    .solve {
+        position: relative;
+    }
+
+    h2 {
+        position: absolute;
+        top: 120%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: max-content;
+        margin: 0;
+        visibility: hidden;
+    }
+
+    h2:not(:empty) {
+        visibility: visible;
+    }
+
+    @media (min-width: 768px) {
+        .button-container {
+            flex-direction: row;
+            flex-wrap: nowrap;
+        }
     }
 </style>

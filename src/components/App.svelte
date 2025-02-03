@@ -589,8 +589,11 @@
   .full-app {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
     margin: 0 auto;
+    padding: 10px;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   [draggable="true"] {
@@ -627,10 +630,9 @@
 
   .pieces {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    grid-template-rows: repeat(2, auto);
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 10px;
-    justify-items: center;
+    padding: 0 10px;
     margin-top: 20px;
   }
 
@@ -702,21 +704,39 @@
   }
 
   @media (max-width: 768px) {
-    .full-app {
-      padding-top: 3rem;
+    .circle {
+      width: 25px;
+      height: 25px;
     }
 
-    .controls {
-      position: fixed;
-      top: 0.5rem;
-      right: 0.5rem;
-      background-color: var(--background-color);
-      padding: 0.5rem;
-      border-radius: 0.25rem;
+    .piece-cell {
+      width: 15px;
+      height: 15px;
+    }
+
+    .piece-buttons button {
+      padding: 3px 6px;
+      font-size: 11px;
     }
 
     .board {
-      margin-top: 1rem;
+      transform: scale(0.9);
+      margin: 0 auto;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .circle {
+      width: 25;
+      height: 25;
+    }
+
+    .board {
+      transform: scale(0.8);
+    }
+
+    .piece-container {
+      max-width: 90px;
     }
   }
 </style>
