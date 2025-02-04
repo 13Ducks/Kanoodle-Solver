@@ -738,5 +738,20 @@
     .piece-container {
       max-width: 90px;
     }
+
+    .controls {
+      position: static;
+      width: 100%;
+      order: -1;
+    }
+
+    .timer-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      padding: 0;
+      margin: 0;
+    }
   }
 </style>
