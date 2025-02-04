@@ -21,11 +21,11 @@
 }
 
 .light-mode {
-  --bg-color: #f5f0e8;
-  --text-color: #4a4a4a;
-  --button-bg-color: #e8e0d0;
-  --button-text-color: #4a4a4a;
-  --piece-color: #d0c8b8;
+  --bg-color: #fafafa;
+  --text-color: #484b6a;
+  --button-bg-color: #e4e5f1;
+  --button-text-color: #484b6a;
+  --piece-color: #d2d3db;
   color-scheme: light;
 }
 
