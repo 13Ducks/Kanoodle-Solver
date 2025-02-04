@@ -723,21 +723,6 @@
       transform: scale(0.9);
       margin: 0 auto;
     }
-  }
-
-  @media (max-width: 480px) {
-    .circle {
-      width: 25;
-      height: 25;
-    }
-
-    .board {
-      transform: scale(0.8);
-    }
-
-    .piece-container {
-      max-width: 90px;
-    }
 
     .controls {
       position: static;
@@ -752,6 +737,21 @@
       align-items: center;
       padding: 0;
       margin: 0;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .circle {
+      width: 25;
+      height: 25;
+    }
+
+    .board {
+      transform: scale(0.8);
+    }
+
+    .piece-container {
+      max-width: 90px;
     }
   }
 </style>
