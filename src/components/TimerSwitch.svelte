@@ -6,7 +6,10 @@
     }
 </script>
 
-<button on:click={toggleTimer}>
+<button
+    on:click={toggleTimer}
+    aria-label={timerEnabled ? "Disable timer" : "Enable timer"}
+>
     {#if timerEnabled}
         <svg
             xmlns="http://www.w3.org/2000/svg"
