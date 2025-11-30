@@ -518,8 +518,9 @@
   function handleOnClick(event, pieceName) {
     for (let cls of event.target.classList) {
       if (cls.includes("piece") && !cls.includes("pieces")) {
-        if (pieceName !== undefined) selectedPiece = pieceName;
-
+        if (pieceName !== undefined && !$pieces[pieceName].placed) {
+          selectedPiece = pieceName;
+        }
         return;
       }
     }
