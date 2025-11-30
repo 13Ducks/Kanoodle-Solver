@@ -11,5 +11,6 @@ Feature checklist:
 - [x] Improve solving algorithm
 - [x] Light mode
 - [x] Timer
+- [x] Challenge mode
 
 Inspired by [https://www.lutanho.net/play/noodle_solver.html](https://www.lutanho.net/play/noodle_solver.html)

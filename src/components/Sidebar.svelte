@@ -1,5 +1,24 @@
 <script>
-    let isOpen = true;
+    import { onMount } from "svelte";
+
+    let isOpen = false;
+    let isMobile = false;
+
+    onMount(() => {
+        // Check if mobile on mount
+        isMobile = window.innerWidth <= 768;
+        if (!isMobile) {
+            isOpen = true;
+        }
+
+        // Update on resize
+        const handleResize = () => {
+            isMobile = window.innerWidth <= 768;
+        };
+        window.addEventListener("resize", handleResize);
+
+        return () => window.removeEventListener("resize", handleResize);
+    });
 
     function toggleSidebar() {
         isOpen = !isOpen;
@@ -114,6 +133,17 @@
     @supports (overflow: overlay) {
         .sidebar-content {
             overflow-y: overlay;
+        }
+    }
+
+    /* Mobile styles */
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 100vw;
+        }
+
+        .toggle-btn.open {
+            transform: translateX(88vw);
         }
     }
 </style>
