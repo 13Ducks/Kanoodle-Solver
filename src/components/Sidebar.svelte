@@ -142,6 +142,10 @@
             width: 100vw;
         }
 
+        .toggle-btn {
+            top: 40px;
+        }
+
         .toggle-btn.open {
             transform: translateX(88vw);
         }
