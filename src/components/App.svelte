@@ -586,6 +586,10 @@
   }
 
   function handleCountdownStop() {
+    // Calculate elapsed time before stopping (for showing solve time)
+    if (countdownActive) {
+      elapsedTime = (challengeTotalSeconds - countdownSeconds) * 1000;
+    }
     countdownActive = false;
     countdownSeconds = 0;
     challengePreplacedPieces = new Set();
