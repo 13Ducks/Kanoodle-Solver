@@ -381,12 +381,18 @@
     const pieceRows = piece.shape.length;
     const pieceCols = piece.shape[0].length;
 
-    // Check if the piece overlaps with existing pieces
+    // Check if the piece fits within bounds and doesn't overlap existing pieces
     for (let i = 0; i < pieceRows; i++) {
       for (let j = 0; j < pieceCols; j++) {
-        if (piece.shape[i][j] === 1 && board[row + i][col + j] !== null) {
-          pieceToPlace = null;
-          return;
+        if (piece.shape[i][j] === 1) {
+          if (
+            row + i >= rows ||
+            col + j >= cols ||
+            board[row + i][col + j] !== null
+          ) {
+            pieceToPlace = null;
+            return;
+          }
         }
       }
     }
@@ -765,13 +771,13 @@
   .board {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 0;
   }
 
   .row {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 0;
   }
 
   .circle {
@@ -782,6 +788,10 @@
     justify-content: center;
     align-items: center;
     font-size: 18px;
+    padding: 5px;
+    box-sizing: content-box;
+    background-clip: content-box;
+    cursor: pointer;
   }
 
   .pieces {
