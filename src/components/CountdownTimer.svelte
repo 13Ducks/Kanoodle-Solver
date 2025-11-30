@@ -249,6 +249,7 @@
         font-size: 13px;
         color: var(--text-color, #333);
         transition: background 0.15s ease;
+        touch-action: manipulation; /* Prevents double-tap zoom on mobile */
     }
 
     .time-option:hover {
@@ -283,7 +284,7 @@
         padding: 6px 8px;
         border: 1px solid var(--border-color, #ddd);
         border-radius: 4px;
-        font-size: 13px;
+        font-size: 16px; /* Prevents iOS auto-zoom on focus */
         background: var(--bg-color, white);
         color: var(--text-color, #333);
         text-align: center;
@@ -314,6 +315,7 @@
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
+        touch-action: manipulation; /* Prevents double-tap zoom on mobile */
     }
 
     .start-btn:hover {
@@ -339,6 +341,7 @@
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
+        touch-action: manipulation; /* Prevents double-tap zoom on mobile */
     }
 
     .cancel-btn:hover {
@@ -372,6 +375,7 @@
             width: 100%;
             min-width: 60px;
             padding: 8px 10px;
+            font-size: 16px; /* Prevents iOS auto-zoom on focus */
         }
     }
 </style>

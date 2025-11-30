@@ -834,6 +834,7 @@
   .piece-buttons button {
     padding: 5px 10px;
     font-size: 12px;
+    touch-action: manipulation; /* Prevents double-tap zoom on mobile */
   }
 
   .controls {
@@ -929,6 +930,7 @@
     .piece-buttons button {
       padding: 3px 6px;
       font-size: 11px;
+      touch-action: manipulation; /* Prevents double-tap zoom on mobile */
     }
 
     .board {
