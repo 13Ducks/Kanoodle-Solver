@@ -65,16 +65,16 @@
 
                 <br />
                 <p>
-                    Inspired by <a
-                        href="https://www.lutanho.net/play/noodle_solver.html"
-                        >Noodle Solver</a
-                    >
-                </p>
-                <p>
                     <a
                         href="mailto:kanoodle@aaryan.dev?subject=Kanoodle%20Feedback"
                         >Contact</a
                     > me for any feature requests.
+                </p>
+                <p>
+                    Inspired by <a
+                        href="https://www.lutanho.net/play/noodle_solver.html"
+                        >Noodle Solver</a
+                    >
                 </p>
             </div>
         {/if}
