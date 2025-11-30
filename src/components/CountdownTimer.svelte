@@ -7,6 +7,9 @@
 
     let selectedMinutes = 2;
     let isDropdownOpen = false;
+    let isCustomMode = false;
+    let customInput = "";
+    let customInputEl;
 
     const minuteOptions = [1, 2, 3, 4, 5];
 
@@ -21,18 +24,53 @@
     function toggleDropdown(event) {
         event.stopPropagation();
         isDropdownOpen = !isDropdownOpen;
+        if (!isDropdownOpen) {
+            isCustomMode = false;
+            customInput = "";
+        }
     }
 
     function selectMinutes(min, event) {
         event.stopPropagation();
         selectedMinutes = min;
         isDropdownOpen = false;
+        isCustomMode = false;
+    }
+
+    function enterCustomMode(event) {
+        event.stopPropagation();
+        isCustomMode = true;
+        customInput = "";
+        setTimeout(() => customInputEl?.focus(), 0);
+    }
+
+    function handleCustomInput(event) {
+        // Only allow numbers
+        customInput = event.target.value.replace(/[^0-9]/g, "");
+        const value = parseInt(customInput, 10);
+        if (value && value > 0 && value <= 60) {
+            selectedMinutes = value;
+        }
+    }
+
+    function handleCustomKeydown(event) {
+        if (event.key === "Enter") {
+            event.stopPropagation();
+            isDropdownOpen = false;
+            isCustomMode = false;
+            customInput = "";
+        } else if (event.key === "Escape") {
+            isCustomMode = false;
+            customInput = "";
+        }
     }
 
     // Close dropdown when clicking outside
     function handleClickOutside(event) {
         if (isDropdownOpen && !event.target.closest(".countdown-container")) {
             isDropdownOpen = false;
+            isCustomMode = false;
+            customInput = "";
         }
     }
 </script>
@@ -78,12 +116,39 @@
                         {#each minuteOptions as min}
                             <button
                                 class="time-option"
-                                class:selected={selectedMinutes === min}
+                                class:selected={selectedMinutes === min &&
+                                    !isCustomMode}
                                 on:click={(e) => selectMinutes(min, e)}
                             >
                                 {min} min
                             </button>
                         {/each}
+                        <div class="dropdown-divider"></div>
+                        {#if isCustomMode}
+                            <div class="custom-input-row">
+                                <input
+                                    bind:this={customInputEl}
+                                    type="text"
+                                    class="custom-time-input"
+                                    placeholder="1-60"
+                                    value={customInput}
+                                    on:input={handleCustomInput}
+                                    on:keydown={handleCustomKeydown}
+                                    on:click|stopPropagation
+                                    maxlength="2"
+                                />
+                            </div>
+                        {:else}
+                            <button
+                                class="time-option custom-option"
+                                class:selected={!minuteOptions.includes(
+                                    selectedMinutes,
+                                )}
+                                on:click={enterCustomMode}
+                            >
+                                Custom...
+                            </button>
+                        {/if}
                     </div>
                 {/if}
             </div>
@@ -193,6 +258,47 @@
     .time-option.selected {
         background: var(--accent-color, #4a90d9);
         color: white;
+    }
+
+    .dropdown-divider {
+        height: 1px;
+        background: var(--border-color, #ddd);
+        margin: 4px 0;
+    }
+
+    .custom-option {
+        font-style: italic;
+        opacity: 0.85;
+    }
+
+    .custom-input-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 8px;
+    }
+
+    .custom-time-input {
+        flex: 1;
+        padding: 6px 8px;
+        border: 1px solid var(--border-color, #ddd);
+        border-radius: 4px;
+        font-size: 13px;
+        background: var(--bg-color, white);
+        color: var(--text-color, #333);
+        text-align: center;
+        width: 50px;
+    }
+
+    .custom-time-input:focus {
+        outline: none;
+        border-color: var(--accent-color, #4a90d9);
+        box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+    }
+
+    .custom-time-input::placeholder {
+        color: var(--text-muted, #999);
+        font-size: 11px;
     }
 
     .start-btn {
