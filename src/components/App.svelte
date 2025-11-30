@@ -11,6 +11,7 @@
   import Sidebar from "./Sidebar.svelte";
   import ThemeSwitch from "./ThemeSwitch.svelte";
   import TimerSwitch from "./TimerSwitch.svelte";
+  import CountdownTimer from "./CountdownTimer.svelte";
 
   onMount(() => {
     polyfill({});
@@ -36,6 +37,18 @@
   let timerStart = null;
   let timerInterval = null;
   let elapsedTime = 0;
+
+  // Countdown challenge timer state
+  let countdownActive = false;
+  let countdownSeconds = 0;
+  let countdownInterval = null;
+  let storedInitialSolution = null;
+  let pendingCountdownMinutes = 0;
+
+  // Shared with Solver component
+  let randomPieceCount = 2;
+  let triggerRandom = false;
+  let solvable = "";
 
   let pieces = writable({
     l: {
@@ -158,6 +171,7 @@
         return currentPieces;
       });
       stopTimer();
+      handleCountdownStop();
       usedHintOrSolver = true;
       for (let i = 0; i < solution.length; i++) {
         for (let j = 0; j < solution[i].length; j++) {
@@ -217,6 +231,9 @@
         .sort(() => Math.random() - 0.5)
         .slice(0, numRandomPieces);
 
+      // Store the full solution for potential auto-solve on countdown expiry
+      storedInitialSolution = solution.map((row) => [...row]);
+
       for (let i = 0; i < solution.length; i++) {
         for (let j = 0; j < solution[i].length; j++) {
           if (chosen.includes(solution[i][j])) {
@@ -227,7 +244,16 @@
         }
       }
       usedHintOrSolver = false;
-      startTimer();
+
+      // Start countdown if this was triggered by Challenge mode, otherwise reset challenge and start regular timer
+      if (pendingCountdownMinutes > 0) {
+        startCountdownTimer(pendingCountdownMinutes);
+        pendingCountdownMinutes = 0;
+      } else {
+        handleCountdownStop(); // Reset any active challenge mode
+        startTimer();
+      }
+
       pieces.update((currentPieces) => {
         for (let piece in currentPieces) {
           if (chosen.includes(piece)) {
@@ -243,6 +269,8 @@
         .fill(null)
         .map(() => Array(cols).fill(null));
       usedHintOrSolver = false;
+      handleCountdownStop();
+      storedInitialSolution = null;
       startTimer();
       pieces.update((currentPieces) => {
         for (let piece in currentPieces) {
@@ -364,6 +392,8 @@
 
     if (isPuzzleComplete()) {
       stopTimer();
+      handleCountdownStop(); // Also stop countdown if running
+      solvable = "Congratulations!";
       if (!usedHintOrSolver) {
         celebrateCompletion();
         usedHintOrSolver = true;
@@ -503,6 +533,85 @@
     const seconds = totalSeconds % 60;
     return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }
+
+  function formatCountdown(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  }
+
+  function handleCountdownStart(event) {
+    const minutes = event.detail.minutes;
+
+    // Set pending countdown and trigger Solver to generate a random puzzle
+    pendingCountdownMinutes = minutes;
+    triggerRandom = true;
+  }
+
+  let challengeTotalSeconds = 0; // Store total seconds for percentage calculation and elapsed time display
+
+  function startCountdownTimer(minutes) {
+    // Stop any existing timers
+    stopTimer();
+
+    countdownActive = true;
+    countdownSeconds = minutes * 60;
+    challengeTotalSeconds = minutes * 60;
+    timerEnabled = true; // Make sure timer display is visible
+    elapsedTime = 0; // Reset elapsed time
+
+    if (countdownInterval) clearInterval(countdownInterval);
+    countdownInterval = setInterval(() => {
+      countdownSeconds--;
+
+      if (countdownSeconds <= 0) {
+        handleCountdownExpired();
+      }
+    }, 1000);
+  }
+
+  function handleCountdownStop() {
+    countdownActive = false;
+    countdownSeconds = 0;
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+  }
+
+  function handleCountdownExpired() {
+    // Clear the countdown interval
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+    countdownActive = false;
+    countdownSeconds = 0;
+
+    // Set elapsed time to show the challenge duration
+    elapsedTime = challengeTotalSeconds * 1000;
+
+    // Auto-solve using the stored initial solution
+    if (storedInitialSolution && !isPuzzleComplete()) {
+      // Apply the full solution to the board
+      pieces.update((currentPieces) => {
+        for (let pieceName in currentPieces) {
+          currentPieces[pieceName].placed = true;
+        }
+        return currentPieces;
+      });
+
+      stopTimer();
+      usedHintOrSolver = true;
+      solvable = "Time's up!";
+
+      for (let i = 0; i < storedInitialSolution.length; i++) {
+        for (let j = 0; j < storedInitialSolution[i].length; j++) {
+          board[i][j] = storedInitialSolution[i][j];
+        }
+      }
+    }
+  }
 </script>
 
 <svelte:window on:keyup={handleKeyUp} on:click={handleOnClick} />
@@ -512,12 +621,31 @@
   <div class="controls">
     <div class="timer-container">
       {#if timerEnabled}
-        <div class="timer">
-          {formatTime(elapsedTime)}
+        <div
+          class="timer"
+          class:countdown-mode={countdownActive &&
+            countdownSeconds > challengeTotalSeconds * 0.5}
+          class:countdown-warning={countdownActive &&
+            countdownSeconds <= challengeTotalSeconds * 0.5 &&
+            countdownSeconds > 10}
+          class:urgent={countdownActive && countdownSeconds <= 10}
+        >
+          {#if countdownActive}
+            {formatCountdown(countdownSeconds)}
+          {:else}
+            {formatTime(elapsedTime)}
+          {/if}
         </div>
       {/if}
       <TimerSwitch bind:timerEnabled />
       <ThemeSwitch />
+    </div>
+    <div class="countdown-wrapper">
+      <CountdownTimer
+        bind:isActive={countdownActive}
+        on:start={handleCountdownStart}
+        on:stop={handleCountdownStop}
+      />
     </div>
   </div>
   <div class="board">
@@ -582,7 +710,14 @@
       </div>
     {/each}
   </div>
-  <Solver {board} bind:solution bind:request />
+  <Solver
+    {board}
+    bind:solution
+    bind:request
+    bind:randomPieceCount
+    bind:triggerRandom
+    bind:solvable
+  />
 </div>
 
 <style>
@@ -691,6 +826,10 @@
     top: 1rem;
     right: 1rem;
     z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
   }
 
   .timer-container {
@@ -701,6 +840,64 @@
   .timer {
     font-size: 1rem;
     font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+  }
+
+  .timer.countdown-mode {
+    background: linear-gradient(135deg, #2d7d46, #236b3a);
+    color: white;
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .timer.countdown-warning {
+    background: linear-gradient(135deg, #e6a817, #cc8f00);
+    color: white;
+    animation: warning-pulse 1.5s ease-in-out infinite;
+  }
+
+  .timer.urgent {
+    background: linear-gradient(135deg, #d94a4a, #bd3535);
+    color: white;
+    animation: urgent-pulse 0.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%,
+    100% {
+      box-shadow: 0 0 5px rgba(45, 125, 70, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 15px rgba(45, 125, 70, 0.5);
+    }
+  }
+
+  @keyframes warning-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 5px rgba(230, 168, 23, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 12px rgba(230, 168, 23, 0.5);
+    }
+  }
+
+  @keyframes urgent-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 5px rgba(217, 74, 74, 0.4);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(217, 74, 74, 0.7);
+      transform: scale(1.02);
+    }
+  }
+
+  .countdown-wrapper {
+    display: flex;
+    justify-content: flex-end;
   }
 
   @media (max-width: 768px) {
@@ -728,6 +925,7 @@
       position: static;
       width: 100%;
       order: -1;
+      align-items: center;
     }
 
     .timer-container {
@@ -737,6 +935,11 @@
       align-items: center;
       padding: 0;
       margin: 0;
+    }
+
+    .countdown-wrapper {
+      justify-content: center;
+      width: 100%;
     }
   }
 

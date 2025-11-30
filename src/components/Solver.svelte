@@ -8,14 +8,15 @@
     let randomButtonGroup;
     let isRandomMenuOpen = false;
 
-    let randomPieceCount = 2;
-    let solvable = "";
+    export let randomPieceCount = 2;
+    export let solvable = "";
     let solvable_dot_cnt = 1;
     let solvable_interval = null;
 
     export let solution = null;
     export let request = "";
     export let board;
+    export let triggerRandom = false;
 
     const replaceDict = {
         l: 1,
@@ -154,6 +155,12 @@
         );
         runSolver(grid);
         solvable = "Good luck!";
+    }
+
+    // Allow external triggering of random game (e.g., from Challenge mode)
+    $: if (triggerRandom) {
+        handleRandom();
+        triggerRandom = false;
     }
 
     function handleReset() {

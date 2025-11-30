@@ -38,6 +38,7 @@
                     solvable board with 2 pieces. You can use the dropdown to
                     select the number of pieces.
                 </p>
+                <p>6. Use challenge mode to play against the clock.</p>
 
                 <br />
                 <p>
