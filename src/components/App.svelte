@@ -198,6 +198,7 @@
       }
       if (notPlaced <= 1) {
         stopTimer();
+        handleCountdownStop();
       }
 
       if (hintPiece === null) break $;
