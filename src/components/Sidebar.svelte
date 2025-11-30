@@ -57,7 +57,11 @@
                     solvable board with 2 pieces. You can use the dropdown to
                     select the number of pieces.
                 </p>
-                <p>6. Use challenge mode to play against the clock.</p>
+                <p>
+                    6. Use challenge mode to play against the clock. In this
+                    mode, the board is generated randomly and you have to solve
+                    it before the timer runs out.
+                </p>
 
                 <br />
                 <p>
@@ -82,7 +86,7 @@
         position: fixed;
         top: 0;
         left: 0;
-        height: 100vh;
+        height: 100dvh;
         z-index: 3;
     }
 

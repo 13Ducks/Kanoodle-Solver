@@ -50,6 +50,9 @@
   let triggerRandom = false;
   let solvable = "";
 
+  // Track preplaced pieces in challenge mode
+  let challengePreplacedPieces = new Set();
+
   let pieces = writable({
     l: {
       shape: [
@@ -234,6 +237,9 @@
       // Store the full solution for potential auto-solve on countdown expiry
       storedInitialSolution = solution.map((row) => [...row]);
 
+      // Track preplaced pieces for challenge mode
+      challengePreplacedPieces = new Set(chosen);
+
       for (let i = 0; i < solution.length; i++) {
         for (let j = 0; j < solution[i].length; j++) {
           if (chosen.includes(solution[i][j])) {
@@ -271,6 +277,7 @@
       usedHintOrSolver = false;
       handleCountdownStop();
       storedInitialSolution = null;
+      challengePreplacedPieces = new Set();
       startTimer();
       pieces.update((currentPieces) => {
         for (let piece in currentPieces) {
@@ -330,6 +337,13 @@
     draggedPiece = pieceName;
 
     if (fromBoard && row !== null && col !== null) {
+      // If in challenge mode and trying to remove a preplaced piece, stop the challenge
+      if (countdownActive && challengePreplacedPieces.has(pieceName)) {
+        handleCountdownStop();
+        startTimer();
+        solvable = "Challenge failed: preplaced piece removed";
+      }
+
       // Find and remove all cells occupied by the piece on the board
       $pieces[pieceName].placed = false;
 
@@ -573,6 +587,7 @@
   function handleCountdownStop() {
     countdownActive = false;
     countdownSeconds = 0;
+    challengePreplacedPieces = new Set();
     if (countdownInterval) {
       clearInterval(countdownInterval);
       countdownInterval = null;
