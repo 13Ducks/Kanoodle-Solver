@@ -317,4 +317,13 @@
             flex-wrap: nowrap;
         }
     }
+
+    @media (max-width: 480px) {
+        h2 {
+            font-size: 1rem;
+            max-width: 90vw;
+            white-space: normal;
+            text-align: center;
+        }
+    }
 </style>
