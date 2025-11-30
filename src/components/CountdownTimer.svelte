@@ -235,7 +235,7 @@
         border-radius: 6px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         z-index: 100;
-        overflow: hidden;
+        min-width: 90px;
     }
 
     .time-option {
@@ -358,8 +358,20 @@
         }
 
         .time-dropdown {
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
+            right: 0;
+            min-width: 120px;
+            transform: none;
+        }
+
+        .custom-input-row {
+            padding: 8px 10px;
+        }
+
+        .custom-time-input {
+            width: 100%;
+            min-width: 60px;
+            padding: 8px 10px;
         }
     }
 </style>
