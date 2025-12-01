@@ -102,6 +102,26 @@
         </button>
     {:else}
         <div class="countdown-setup">
+            <button
+                class="start-btn"
+                on:click={startCountdown}
+                title="Start Timed Challenge"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Challenge
+            </button>
             <!-- svelte-ignore a11y-no-static-element-interactions -->
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div class="time-selector" on:click={toggleDropdown}>
@@ -152,26 +172,6 @@
                     </div>
                 {/if}
             </div>
-            <button
-                class="start-btn"
-                on:click={startCountdown}
-                title="Start Timed Challenge"
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-                Challenge
-            </button>
         </div>
     {/if}
 </div>
@@ -185,6 +185,7 @@
 
     .countdown-setup {
         display: flex;
+        flex-direction: column;
         align-items: center;
         gap: 6px;
     }

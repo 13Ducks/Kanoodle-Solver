@@ -429,6 +429,13 @@
     event.preventDefault();
     if (!draggedPiece) return;
 
+    // Clear existing hover first (fixes race condition when dragging between cells)
+    for (let r = 0; r < hovered.length; r++) {
+      for (let c = 0; c < hovered[r].length; c++) {
+        hovered[r][c] = false;
+      }
+    }
+
     const piece = $pieces[draggedPiece];
     const pieceRows = piece.shape.length;
     const pieceCols = piece.shape[0].length;
@@ -444,6 +451,15 @@
 
   function handleDragLeave(event) {
     event.preventDefault();
+    // Only keep hover if we're entering another cell (not gaps between cells)
+    const relatedTarget = event.relatedTarget;
+    if (
+      relatedTarget &&
+      relatedTarget.closest &&
+      relatedTarget.closest(".circle")
+    ) {
+      return; // Entering another cell, handleDragEnter will take over
+    }
     for (let row = 0; row < hovered.length; row++) {
       for (let col = 0; col < hovered[row].length; col++) {
         hovered[row][col] = false;

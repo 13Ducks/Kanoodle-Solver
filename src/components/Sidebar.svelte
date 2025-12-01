@@ -2,26 +2,51 @@
     import { onMount } from "svelte";
 
     let isOpen = false;
-    let isMobile = false;
+
+    // Touch/swipe tracking
+    let touchStartX = 0;
+    let touchCurrentX = 0;
+    let isDragging = false;
+    let swipeOffset = 0;
 
     onMount(() => {
-        // Check if mobile on mount
-        isMobile = window.innerWidth <= 768;
-        if (!isMobile) {
-            isOpen = true;
-        }
-
-        // Update on resize
-        const handleResize = () => {
-            isMobile = window.innerWidth <= 768;
-        };
-        window.addEventListener("resize", handleResize);
-
-        return () => window.removeEventListener("resize", handleResize);
+        isOpen = true;
     });
 
     function toggleSidebar() {
         isOpen = !isOpen;
+    }
+
+    function handleTouchStart(e) {
+        if (!isOpen) return;
+        touchStartX = e.touches[0].clientX;
+        touchCurrentX = touchStartX;
+        isDragging = true;
+        swipeOffset = 0;
+    }
+
+    function handleTouchMove(e) {
+        if (!isDragging || !isOpen) return;
+        touchCurrentX = e.touches[0].clientX;
+        const diff = touchCurrentX - touchStartX;
+
+        // Only allow swiping left (negative direction) to close
+        if (diff < 0) {
+            swipeOffset = diff;
+        }
+    }
+
+    function handleTouchEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+
+        const swipeThreshold = -80; // px needed to trigger close
+
+        if (swipeOffset < swipeThreshold) {
+            isOpen = false;
+        }
+
+        swipeOffset = 0;
     }
 </script>
 
@@ -32,9 +57,19 @@
         on:click={toggleSidebar}
         style="right:-40px"
     >
-        {isOpen ? "<" : ">"}
+        {isOpen ? "Close" : "≡"}
     </button>
-    <div class="sidebar" class:open={isOpen}>
+    <div
+        class="sidebar"
+        class:open={isOpen}
+        class:dragging={isDragging}
+        on:touchstart={handleTouchStart}
+        on:touchmove={handleTouchMove}
+        on:touchend={handleTouchEnd}
+        style={isDragging && swipeOffset < 0
+            ? `transform: translateX(${swipeOffset}px)`
+            : ""}
+    >
         {#if isOpen}
             <div class="sidebar-content">
                 <h2>Kanoodle</h2>
@@ -106,6 +141,10 @@
 
     .sidebar.open {
         transform: translateX(0);
+    }
+
+    .sidebar.dragging {
+        transition: none;
     }
 
     .toggle-btn {
