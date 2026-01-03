@@ -74,30 +74,24 @@
             <div class="sidebar-content">
                 <h2>Kanoodle</h2>
                 <p>
-                    1. Drag and drop or click to move the pieces onto the board.
-                    You can also drag pieces already on the board.
+                    Drag/click pieces to move them onto the board. You can also
+                    drag pieces already on the board. You can use the buttons
+                    under the pieces to rotate and flip them or press <b>R</b>
+                    and <b>F</b>.
+                </p>
+                <p><b>Solvable?</b> — check if board is solvable</p>
+                <p><b>Hint</b> — place one piece for you</p>
+                <p>
+                    <b>Solve ▼</b> — solve the board (dropdown: "find all
+                    solutions" which also makes <i>Solvable?</i> count solutions)
                 </p>
                 <p>
-                    2. Rotate and flip the pieces using the buttons or keyboard
-                    shortcuts (R to rotate, F to flip).
-                </p>
-                <p>3. Try to fill the entire board with the pieces.</p>
-                <p>
-                    4. Check if a board is solvable with the "Solvable?" button,
-                    click the "Hint" button to place one piece, or click the
-                    "Solve" button to fully solve.
+                    <b>Random Game ▼</b> — generate a puzzle (dropdown: piece count)
                 </p>
                 <p>
-                    5. Click the "Random Game" button to generate a random
-                    solvable board with 2 pieces. You can use the dropdown to
-                    select the number of pieces.
+                    <b>Challenge</b> — timed mode, solve a random board before time
+                    runs out
                 </p>
-                <p>
-                    6. Use challenge mode to play against the clock. In this
-                    mode, the board is generated randomly and you have to solve
-                    it before the timer runs out.
-                </p>
-
                 <br />
                 <p>
                     <a

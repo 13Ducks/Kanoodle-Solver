@@ -6,7 +6,9 @@
     const cols = 5;
 
     let randomButtonGroup;
+    let solveButtonGroup;
     let isRandomMenuOpen = false;
+    let isSolveMenuOpen = false;
 
     export let randomPieceCount = 2;
     export let solvable = "";
@@ -17,6 +19,13 @@
     export let request = "";
     export let board;
     export let triggerRandom = false;
+
+    // Multi-solution support
+    let findAllSolutionsEnabled = false;
+    let allSolutions = [];
+    let currentSolutionIndex = 0;
+    let totalSolutions = 0;
+    let limitReached = false;
 
     const replaceDict = {
         l: 1,
@@ -57,6 +66,13 @@
             ) {
                 isRandomMenuOpen = false;
             }
+            if (
+                isSolveMenuOpen &&
+                solveButtonGroup &&
+                !solveButtonGroup.contains(event.target)
+            ) {
+                isSolveMenuOpen = false;
+            }
         };
 
         window.addEventListener("click", handleClickOutside);
@@ -71,11 +87,16 @@
         isRandomMenuOpen = !isRandomMenuOpen;
     }
 
+    function toggleSolveMenu(event) {
+        event.stopPropagation();
+        isSolveMenuOpen = !isSolveMenuOpen;
+    }
+
     function transpose(matrix) {
         return matrix[0].map((col, i) => matrix.map((row) => row[i]));
     }
 
-    function runSolver(board) {
+    function runSolver(board, { findAll = false, countOnly = false } = {}) {
         let boardToUse = transpose(board);
         for (let i = 0; i < boardToUse.length; i++) {
             for (let j = 0; j < boardToUse[i].length; j++) {
@@ -85,39 +106,73 @@
             }
         }
 
-        let solvedBoard = startSolve(boardToUse);
+        let result = startSolve(boardToUse, { findAll, maxSolutions: 1000 });
         clearInterval(solvable_interval);
         solvable_dot_cnt = 1;
 
-        if (!solvedBoard.solved) {
+        if (!result.solved) {
             solution = null;
+            allSolutions = [];
+            currentSolutionIndex = 0;
+            totalSolutions = 0;
+            limitReached = false;
             solvable = "Not Solvable";
             return;
         }
 
-        solvable = "Solvable";
-        let solvedBoardGrid = solvedBoard.grid;
-        for (let i = 0; i < solvedBoardGrid.length; i++) {
-            for (let j = 0; j < solvedBoardGrid[i].length; j++) {
-                if (solvedBoardGrid[i][j] !== null) {
-                    solvedBoardGrid[i][j] = solveDict[solvedBoardGrid[i][j]];
-                }
-            }
+        // Convert grid(s) to use piece letters
+        function convertGrid(grid) {
+            return grid.map((row) =>
+                row.map((cell) => (cell !== null ? solveDict[cell] : null)),
+            );
         }
 
-        solution = solvedBoardGrid;
+        if (findAll && result.solutions) {
+            // Multi-solution mode
+            totalSolutions = result.totalCount;
+            limitReached = result.limitReached;
+
+            if (countOnly) {
+                // Just show the count, don't set solution
+                allSolutions = [];
+                currentSolutionIndex = 0;
+                solvable = limitReached
+                    ? `${totalSolutions}+ solutions`
+                    : `${totalSolutions} solution${totalSolutions > 1 ? "s" : ""}`;
+            } else {
+                // Full solve mode - store solutions for navigation
+                allSolutions = result.solutions.map(convertGrid);
+                currentSolutionIndex = 0;
+                solution = allSolutions[0];
+                solvable = limitReached
+                    ? `${totalSolutions}+ solutions found`
+                    : `${totalSolutions} solution${totalSolutions > 1 ? "s" : ""} found`;
+            }
+        } else {
+            // Single solution mode
+            allSolutions = [];
+            currentSolutionIndex = 0;
+            totalSolutions = 0;
+            limitReached = false;
+            if (!countOnly) {
+                solution = convertGrid(result.grid);
+            }
+            solvable = "Solvable";
+        }
     }
 
     function handleSolvable() {
         request = "solvable";
 
-        solvable = "Checking";
+        solvable = findAllSolutionsEnabled ? "Counting" : "Checking";
         solvable_interval = setInterval(() => {
-            solvable = "Checking" + ".".repeat(solvable_dot_cnt);
+            solvable =
+                (findAllSolutionsEnabled ? "Counting" : "Checking") +
+                ".".repeat(solvable_dot_cnt);
             solvable_dot_cnt = (solvable_dot_cnt + 1) % 4;
         }, 400);
 
-        runSolver(board);
+        runSolver(board, { findAll: findAllSolutionsEnabled, countOnly: true });
     }
 
     function handleHint() {
@@ -139,7 +194,24 @@
             solvable_dot_cnt = (solvable_dot_cnt + 1) % 4;
         }, 400);
 
-        runSolver(board);
+        runSolver(board, { findAll: findAllSolutionsEnabled });
+    }
+
+    function nextSolution() {
+        if (allSolutions.length > 1) {
+            currentSolutionIndex =
+                (currentSolutionIndex + 1) % allSolutions.length;
+            solution = allSolutions[currentSolutionIndex];
+        }
+    }
+
+    function prevSolution() {
+        if (allSolutions.length > 1) {
+            currentSolutionIndex =
+                (currentSolutionIndex - 1 + allSolutions.length) %
+                allSolutions.length;
+            solution = allSolutions[currentSolutionIndex];
+        }
     }
 
     function handleRandom() {
@@ -167,6 +239,10 @@
         request = "reset";
         solvable = "";
         solution = [];
+        allSolutions = [];
+        currentSolutionIndex = 0;
+        totalSolutions = 0;
+        limitReached = false;
     }
 </script>
 
@@ -175,7 +251,29 @@
         <div class="button-row">
             <button on:click={handleSolvable}>Solvable?</button>
             <button on:click={handleHint}>Hint</button>
-            <button on:click={handleSolve}>Solve</button>
+            <div class="solve-button-group" bind:this={solveButtonGroup}>
+                <button on:click={handleSolve} class="solve-main">Solve</button>
+                <div class="separator"></div>
+                <button
+                    class="dropdown-toggle"
+                    on:click={toggleSolveMenu}
+                    class:active={isSolveMenuOpen}
+                >
+                    ▼
+                </button>
+
+                {#if isSolveMenuOpen}
+                    <div class="solve-dropdown">
+                        <label class="checkbox-container">
+                            <input
+                                type="checkbox"
+                                bind:checked={findAllSolutionsEnabled}
+                            />
+                            <span>Find all solutions</span>
+                        </label>
+                    </div>
+                {/if}
+            </div>
         </div>
 
         <div class="button-row">
@@ -213,6 +311,18 @@
         </div>
     </div>
 
+    {#if allSolutions.length > 1}
+        <div class="solution-nav">
+            <button class="nav-btn" on:click={prevSolution}>◀</button>
+            <span class="solution-counter">
+                {currentSolutionIndex + 1} / {totalSolutions}{limitReached
+                    ? "+"
+                    : ""}
+            </span>
+            <button class="nav-btn" on:click={nextSolution}>▶</button>
+        </div>
+    {/if}
+
     <h2>{solvable}</h2>
 </div>
 
@@ -240,13 +350,15 @@
         flex-wrap: wrap;
     }
 
-    .random-button-group {
+    .random-button-group,
+    .solve-button-group {
         position: relative;
         display: flex;
         align-items: stretch;
     }
 
-    .random-main {
+    .random-main,
+    .solve-main {
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
         margin: 0;
@@ -266,7 +378,8 @@
         margin: 0;
     }
 
-    .random-dropdown {
+    .random-dropdown,
+    .solve-dropdown {
         position: absolute;
         top: 100%;
         right: 0;
@@ -277,6 +390,21 @@
         margin-top: 4px;
         z-index: 100;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        white-space: nowrap;
+        font-size: 14px;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
     }
 
     .slider-container {
@@ -325,5 +453,40 @@
             white-space: normal;
             text-align: center;
         }
+    }
+
+    .solution-nav {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 12px;
+        padding: 8px 16px;
+        background: var(--button-bg-color);
+        border-radius: 8px;
+        border: 1px solid var(--text-color);
+    }
+
+    .nav-btn {
+        padding: 6px 12px;
+        font-size: 14px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: transform 0.1s ease;
+    }
+
+    .nav-btn:hover {
+        transform: scale(1.05);
+    }
+
+    .nav-btn:active {
+        transform: scale(0.95);
+    }
+
+    .solution-counter {
+        font-weight: bold;
+        font-size: 14px;
+        min-width: 80px;
+        text-align: center;
     }
 </style>

@@ -61,10 +61,7 @@ class NoodleSolver {
     this.Prev = new Int8Array(16);
     this.IGrid = new Int8Array(128);
     this.Noodles = [];
-    this.Solutions = "";
     this.SolutionCounter = 0;
-    this.StartTime = new Date();
-    this.NoodleSymOps = new Int8Array(16);
     this.NoodleRank = new Int8Array(16);
     this.NoodleOrder = new Int8Array(16);
     this.SymOps8Order = new Int8Array(16);
@@ -82,13 +79,6 @@ class NoodleSolver {
       if (ii == 11) {
         this.SolutionCounter++;
         if (this.SolutionCounter > rr) return 1;
-        this.Solutions += "#" + this.SolutionCounter + ":<br>";
-        for (jj = 0; jj < 5; jj++) {
-          for (ii = 0; ii < 11; ii++) {
-            this.Solutions += Letters.charAt(gg[(ii << 3) + jj]);
-          }
-          this.Solutions += "<br>";
-        }
         return 0;
       }
     }
@@ -125,16 +115,11 @@ class NoodleSolver {
   Init(tt, rr) {
     let ii, jj, nn, ss = "-ABCDEFGHIJKL-abcdefghijkl", aa = tt.split(",");
     let oo = this.NoodleOrder;
-    this.Solutions = "";
     this.SolutionCounter = 0;
     this.InitArray(this.SymOps8Order, 0, 8, rr);
     this.InitArray(this.SymOps4Order, 0, 4, rr);
     this.InitArray(oo, 0, 12, rr);
     for (ii = 0; ii < 12; ii++) this.NoodleRank[oo[ii]] = ii;
-    for (ii = 0; ii < 5; ii++) this.NoodleSymOps[oo[ii]] = 8;
-    for (ii = 5; ii < 9; ii++) this.NoodleSymOps[oo[ii]] = 4;
-    for (ii = 9; ii < 10; ii++) this.NoodleSymOps[oo[ii]] = 2;
-    for (ii = 10; ii < 12; ii++) this.NoodleSymOps[oo[ii]] = 1;
     this.Noodles[oo[0]] = new Noodle(8, [0, 0, 1, 0, 2, 0, 0, 1]);
     this.Noodles[oo[1]] = new Noodle(8, [0, 0, 1, 0, 2, 0, 0, 1, 1, 1]);
     this.Noodles[oo[2]] = new Noodle(8, [0, 0, 1, 0, 2, 0, 3, 0, 0, 1]);
@@ -211,7 +196,7 @@ function checkObviousFail(board) {
   return false;
 }
 
-export function startSolve(gridState, maxSolutions = -1) {
+export function startSolve(gridState, { findAll = false, maxSolutions = 1000 } = {}) {
   let tt = "";
   for (let jj = 0; jj < 5; jj++) {
     if (jj > 0) tt += ",";
@@ -219,27 +204,100 @@ export function startSolve(gridState, maxSolutions = -1) {
       tt += Letters.charAt(gridState[ii][jj]);
     }
   }
+
   const ss = new NoodleSolver();
-  if (!checkObviousFail(gridState) && ss.Init(tt, maxSolutions)) {
-    const rr = ss.Solve(0, 0, maxSolutions);
-    if (rr) {
-      const solvedGrid = [];
-      for (let jj = 0; jj < 5; jj++) {
-        solvedGrid[jj] = [];
-        for (let ii = 0; ii < 11; ii++) {
-          let oo = ss.IGrid[(ii << 3) + jj];
-          if (oo > 0) oo = ss.NoodleRank[oo - 1] + 1;
-          solvedGrid[jj][ii] = oo;
+  // Pass -1 to Init to enable randomization (needed for random game variety)
+  if (!checkObviousFail(gridState) && ss.Init(tt, -1)) {
+
+    if (findAll) {
+      // Find all solutions mode
+      const solutions = [];
+
+      function solveAll(ii0, jj0) {
+        let gg = ss.IGrid;
+        let ii = ii0, jj = jj0;
+
+        while (gg[(ii << 3) + jj] > 0) {
+          jj++;
+          if (jj == 5) { ii++; jj = 0; }
+          if (ii == 11) {
+            const solvedGrid = [];
+            for (let j = 0; j < 5; j++) {
+              solvedGrid[j] = [];
+              for (let i = 0; i < 11; i++) {
+                let oo = gg[(i << 3) + j];
+                if (oo > 0) oo = ss.NoodleRank[oo - 1] + 1;
+                solvedGrid[j][i] = oo;
+              }
+            }
+            solutions.push(solvedGrid);
+            return solutions.length >= maxSolutions;
+          }
         }
+
+        const ii3j = (ii << 3) + jj;
+        let mm = ss.Next[0];
+
+        while (mm < 13) {
+          const qq = ss.Noodles[mm - 1];
+          const qqo = qq.o;
+          const qql = qq.l;
+          const mmn = ss.Next[mm];
+          const mmp = ss.Prev[mm];
+          ss.Prev[mmn] = mmp;
+          ss.Next[mmp] = mmn;
+
+          L: for (let pp = 0; pp < qqo; pp++) {
+            let oo = pp << 3;
+            const xx3y = qq.x3y;
+
+            for (let ll = 1; ll < qql; ll++) {
+              if (gg[xx3y[oo + ll] + ii3j] > 0) continue L;
+            }
+
+            for (let ll = 0; ll < qql; ll++) gg[xx3y[oo + ll] + ii3j] = mm;
+            if (solveAll(ii, jj)) return true;
+            for (let ll = 0; ll < qql; ll++) gg[xx3y[oo + ll] + ii3j] = 0;
+          }
+
+          ss.Next[mmp] = ss.Prev[mmn] = mm;
+          mm = mmn;
+        }
+        return false;
       }
+
+      solveAll(0, 0);
+
       return {
-        solved: true,
-        grid: solvedGrid,
+        solved: solutions.length > 0,
+        grid: solutions[0] || null,
+        solutions: solutions,
+        totalCount: solutions.length,
+        limitReached: solutions.length >= maxSolutions
       };
     } else {
-      return {
-        solved: false,
-      };
+      // Single solution mode (original behavior)
+      // Pass 0 so solver stops after finding first solution
+      const rr = ss.Solve(0, 0, 0);
+      if (rr) {
+        const solvedGrid = [];
+        for (let jj = 0; jj < 5; jj++) {
+          solvedGrid[jj] = [];
+          for (let ii = 0; ii < 11; ii++) {
+            let oo = ss.IGrid[(ii << 3) + jj];
+            if (oo > 0) oo = ss.NoodleRank[oo - 1] + 1;
+            solvedGrid[jj][ii] = oo;
+          }
+        }
+        return {
+          solved: true,
+          grid: solvedGrid,
+        };
+      } else {
+        return {
+          solved: false,
+        };
+      }
     }
   } else {
     return {
