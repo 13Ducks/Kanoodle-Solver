@@ -207,7 +207,9 @@ export function startSolve(gridState, { findAll = false, maxSolutions = 1000 } =
 
   const ss = new NoodleSolver();
   // Pass -1 to Init to enable randomization (needed for random game variety)
-  if (!checkObviousFail(gridState) && ss.Init(tt, -1)) {
+  // Pass 0 when finding all solutions for deterministic ordering
+  const initRandom = findAll ? 0 : -1;
+  if (!checkObviousFail(gridState) && ss.Init(tt, initRandom)) {
 
     if (findAll) {
       // Find all solutions mode
