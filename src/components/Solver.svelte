@@ -249,7 +249,9 @@
 <div class="solve">
     <div class="button-container">
         <div class="button-row">
-            <button on:click={handleSolvable}>Solvable?</button>
+            <button on:click={handleSolvable} class="solvable-btn"
+                >{findAllSolutionsEnabled ? "Count" : "Solvable?"}</button
+            >
             <button on:click={handleHint}>Hint</button>
             <div class="solve-button-group" bind:this={solveButtonGroup}>
                 <button on:click={handleSolve} class="solve-main">Solve</button>
@@ -348,6 +350,10 @@
         gap: 8px;
         justify-content: center;
         flex-wrap: wrap;
+    }
+
+    .solvable-btn {
+        min-width: 7em;
     }
 
     .random-button-group,
