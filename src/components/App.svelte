@@ -327,6 +327,8 @@
 
   let draggedPiece = null;
   let selectedPiece = null;
+  let uniquePermutations = []; // Stores all unique shapes for the selected piece
+  let uniquePermutationIndex = 0;
 
   function handleDragStart(
     event,
@@ -423,6 +425,8 @@
 
     draggedPiece = null;
     selectedPiece = null;
+    uniquePermutations = [];
+    uniquePermutationIndex = 0;
   }
 
   function handleDragEnter(event, row, col) {
@@ -541,12 +545,53 @@
     for (let cls of event.target.classList) {
       if (cls.includes("piece") && !cls.includes("pieces")) {
         if (pieceName !== undefined && !$pieces[pieceName].placed) {
-          selectedPiece = pieceName;
+          if (selectedPiece === pieceName) {
+            cyclePermutation(pieceName);
+          } else {
+            selectedPiece = pieceName;
+            computeUniquePermutations(pieceName);
+            uniquePermutationIndex = 0;
+          }
         }
         return;
       }
     }
     selectedPiece = null;
+    uniquePermutations = [];
+    uniquePermutationIndex = 0;
+  }
+
+  function shapesEqual(a, b) {
+    if (a.length !== b.length || a[0].length !== b[0].length) return false;
+    return a.every((row, i) => row.every((cell, j) => cell === b[i][j]));
+  }
+
+  function copyShape(shape) {
+    return shape.map((row) => [...row]);
+  }
+
+  function computeUniquePermutations(pieceName) {
+    const tempPiece = { shape: copyShape($pieces[pieceName].shape) };
+    uniquePermutations = [copyShape(tempPiece.shape)];
+
+    for (let i = 1; i < 8; i++) {
+      i === 4 ? flipPiece(tempPiece) : rotatePiece(tempPiece);
+      if (!uniquePermutations.some((s) => shapesEqual(s, tempPiece.shape))) {
+        uniquePermutations.push(copyShape(tempPiece.shape));
+      }
+    }
+  }
+
+  function cyclePermutation(pieceName) {
+    if (uniquePermutations.length <= 1) return;
+    uniquePermutationIndex =
+      (uniquePermutationIndex + 1) % uniquePermutations.length;
+    pieces.update((p) => {
+      p[pieceName].shape = copyShape(
+        uniquePermutations[uniquePermutationIndex],
+      );
+      return p;
+    });
   }
 
   function startTimer() {
