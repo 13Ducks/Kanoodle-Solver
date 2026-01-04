@@ -75,9 +75,12 @@
                 <h2>Kanoodle</h2>
                 <p>
                     Drag/click pieces to move them onto the board. You can also
-                    drag pieces already on the board. You can use the buttons
-                    under the pieces to rotate and flip them, click the pieces
-                    to cycle through all unique orientations, or press <b>R</b>
+                    drag pieces already on the board.
+                </p>
+                <p>
+                    You can use the buttons under the pieces to rotate and flip
+                    them, click the pieces to cycle through all unique
+                    orientations, or press <b>R</b>
                     and <b>F</b>.
                 </p>
                 <p><b>Solvable?</b> — check if board is solvable</p>
