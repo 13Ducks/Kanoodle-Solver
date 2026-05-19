@@ -1204,7 +1204,10 @@
   .drag-actions {
     position: fixed;
     left: 50%;
-    bottom: 0.25rem;
+    /* Sits above the AdSense mobile anchor ad (~50-70px tall) and clears the
+       iOS home indicator. Desktop (>=1024px) overrides this to pin to the
+       right side instead. */
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 4.5rem);
     transform: translateX(-50%);
     display: flex;
     gap: 10px;
