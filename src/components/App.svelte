@@ -19,6 +19,13 @@
       dragImageTranslateOverride: (_event, hoverCoords) => {
         if (hoverCoords) updateDragPreviewPosition(hoverCoords.x, hoverCoords.y);
       },
+      // mobile-drag-drop@3.0.0-rc.0's default elementFromPoint returns
+      // `undefined` (not `null`) when the point hits nothing. The per-tick
+      // iteration code only does `null === target`, so it ends up dispatching
+      // a synthetic `dragenter` with an undefined target and crashes inside
+      // `target.getBoundingClientRect()`. Forcing a null return falls into
+      // the correct branch.
+      elementFromPoint: (x, y) => document.elementFromPoint(x, y) ?? null,
     });
     window.addEventListener("touchmove", () => {}, { passive: false });
     startTimer();
@@ -265,7 +272,11 @@
   }
 
   $: {
-    if (updated) break $;
+    if (updated) {
+      console.log("[reactive] big $: block re-fired (early-out)");
+      break $;
+    }
+    console.log("[reactive] big $: block running full body");
     updated = true;
 
     if (solution !== null && request == "solve") {
@@ -495,7 +506,9 @@
     draggedPiece = null;
     lastHoverRow = null;
     lastHoverCol = null;
+    console.time("[drop] clearHoverPreview");
     clearHoverPreview();
+    console.timeEnd("[drop] clearHoverPreview");
   }
 
   function handleGlobalDragOver(event) {
@@ -517,16 +530,24 @@
   }
 
   function handleDrop(event, row, col, selected = null) {
+    console.time("[drop] total");
+    console.time("[drop] sync JS");
     event.preventDefault();
 
     let pieceToPlace = selected ? selected : draggedPiece;
-    if (!pieceToPlace) return;
+    if (!pieceToPlace) {
+      console.timeEnd("[drop] sync JS");
+      console.timeEnd("[drop] total");
+      return;
+    }
 
+    console.time("[drop] clear hovered");
     for (let row = 0; row < hovered.length; row++) {
       for (let col = 0; col < hovered[row].length; col++) {
         hovered[row][col] = false;
       }
     }
+    console.timeEnd("[drop] clear hovered");
 
     const piece = $pieces[pieceToPlace];
     const pieceRows = piece.shape.length;
@@ -542,13 +563,16 @@
             board[row + i][col + j] !== null
           ) {
             pieceToPlace = null;
+            console.timeEnd("[drop] sync JS");
+            console.timeEnd("[drop] total");
+            console.log("[drop] rejected (out of bounds / overlap)");
             return;
           }
         }
       }
     }
 
-    // Place the piece on the board
+    console.time("[drop] mutate board");
     for (let i = 0; i < pieceRows; i++) {
       for (let j = 0; j < pieceCols; j++) {
         if (piece.shape[i][j] === 1) {
@@ -556,26 +580,46 @@
         }
       }
     }
+    console.timeEnd("[drop] mutate board");
 
+    console.time("[drop] pieces.update");
     pieces.update((currentPieces) => {
       currentPieces[pieceToPlace].placed = true;
       return currentPieces;
     });
+    console.timeEnd("[drop] pieces.update");
 
-    if (isPuzzleComplete()) {
+    console.time("[drop] complete-check");
+    const complete = isPuzzleComplete();
+    console.timeEnd("[drop] complete-check");
+    if (complete) {
       stopTimer();
       handleCountdownStop(); // Also stop countdown if running
       solvable = "Congratulations!";
       if (!usedHintOrSolver) {
+        console.time("[drop] confetti");
         celebrateCompletion();
+        console.timeEnd("[drop] confetti");
         usedHintOrSolver = true;
       }
     }
 
+    console.time("[drop] dragEnd+cleanup");
     handleDragEnd();
     selectedPiece = null;
     uniquePermutations = [];
     uniquePermutationIndex = 0;
+    console.timeEnd("[drop] dragEnd+cleanup");
+    console.timeEnd("[drop] sync JS");
+
+    // Anything between here and the next frame is Svelte reactivity + style
+    // recalc + paint. If [drop] total >> [drop] sync JS, the cost is in the
+    // browser's render pipeline, not our handler.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        console.timeEnd("[drop] total");
+      });
+    });
   }
 
   function clearHoverPreview() {
@@ -632,6 +676,7 @@
     lastHoverRow !== null &&
     lastHoverCol !== null
   ) {
+    console.log("[reactive] paintHoverPreview from $: block");
     paintHoverPreview(lastHoverRow, lastHoverCol);
   }
 
