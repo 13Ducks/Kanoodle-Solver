@@ -14,9 +14,20 @@
   import CountdownTimer from "./CountdownTimer.svelte";
 
   onMount(() => {
-    polyfill({});
-    window.addEventListener("touchmove", function () {}, { passive: false });
+    // mobile-drag-drop's synthetic dragover only fires at iterationInterval
+    // (~6Hz). The polyfill DOES position its own drag image at touchmove
+    // rate via this hook, so we piggy-back on it to position ours smoothly.
+    polyfill({
+      dragImageTranslateOverride: (_event, hoverCoords) => {
+        if (hoverCoords) updateDragPreviewPosition(hoverCoords.x, hoverCoords.y);
+      },
+    });
+    window.addEventListener("touchmove", () => {}, { passive: false });
     startTimer();
+
+    transparentDragImg = new Image(1, 1);
+    transparentDragImg.src =
+      "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
   });
 
   const rows = 5;
@@ -330,6 +341,22 @@
   let uniquePermutations = []; // Stores all unique shapes for the selected piece
   let uniquePermutationIndex = 0;
 
+  // Drag preview state. The native drag image is a static snapshot taken
+  // at dragstart and can't update when the user rotates/flips mid-drag.
+  // We hide it with a 1x1 transparent gif and render a custom preview
+  // whose shape is bound through Svelte and whose position is set with
+  // direct DOM writes to skip Svelte's per-frame reactivity overhead.
+  let dragPreviewEl;
+  let transparentDragImg = null;
+  let lastHoverRow = null;
+  let lastHoverCol = null;
+
+  function updateDragPreviewPosition(x, y) {
+    if (dragPreviewEl) {
+      dragPreviewEl.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    }
+  }
+
   function handleDragStart(
     event,
     pieceName,
@@ -340,16 +367,13 @@
     draggedPiece = pieceName;
 
     if (fromBoard && row !== null && col !== null) {
-      // If in challenge mode and trying to remove a preplaced piece, stop the challenge
       if (countdownActive && challengePreplacedPieces.has(pieceName)) {
         handleCountdownStop();
         startTimer();
         solvable = "Challenge failed: preplaced piece removed";
       }
 
-      // Find and remove all cells occupied by the piece on the board
       $pieces[pieceName].placed = false;
-
       for (let i = 0; i < board.length; i++) {
         for (let j = 0; j < board[i].length; j++) {
           if (board[i][j] === pieceName) {
@@ -359,8 +383,31 @@
       }
     }
 
-    const draggedPieceElement = document.querySelector(".piece-" + pieceName);
-    event.dataTransfer.setDragImage(draggedPieceElement, 0, 0);
+    event.dataTransfer.effectAllowed = "move";
+    if (transparentDragImg) {
+      event.dataTransfer.setDragImage(transparentDragImg, 0, 0);
+    }
+  }
+
+  function handleDragEnd() {
+    draggedPiece = null;
+    lastHoverRow = null;
+    lastHoverCol = null;
+    clearHoverPreview();
+  }
+
+  function handleGlobalDragOver(event) {
+    if (!draggedPiece) return;
+    // preventDefault makes the whole window a valid drop target, which
+    // skips the browser's ~250ms snap-back animation on drop-outside-board.
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    updateDragPreviewPosition(event.clientX, event.clientY);
+  }
+
+  function handleGlobalDrop(event) {
+    if (!draggedPiece) return;
+    event.preventDefault();
   }
 
   function handleDragOver(event) {
@@ -423,27 +470,26 @@
       }
     }
 
-    draggedPiece = null;
+    handleDragEnd();
     selectedPiece = null;
     uniquePermutations = [];
     uniquePermutationIndex = 0;
   }
 
-  function handleDragEnter(event, row, col) {
-    event.preventDefault();
-    if (!draggedPiece) return;
-
-    // Clear existing hover first (fixes race condition when dragging between cells)
+  function clearHoverPreview() {
     for (let r = 0; r < hovered.length; r++) {
       for (let c = 0; c < hovered[r].length; c++) {
         hovered[r][c] = false;
       }
     }
+  }
 
+  function paintHoverPreview(row, col) {
+    clearHoverPreview();
+    if (row === null || col === null || !draggedPiece) return;
     const piece = $pieces[draggedPiece];
     const pieceRows = piece.shape.length;
     const pieceCols = piece.shape[0].length;
-    // Update the hover rows and columns
     for (let i = 0; i < pieceRows; i++) {
       for (let j = 0; j < pieceCols; j++) {
         if (piece.shape[i][j] === 1 && row + i < rows && col + j < cols) {
@@ -451,6 +497,14 @@
         }
       }
     }
+  }
+
+  function handleDragEnter(event, row, col) {
+    event.preventDefault();
+    if (!draggedPiece) return;
+    lastHoverRow = row;
+    lastHoverCol = col;
+    paintHoverPreview(row, col);
   }
 
   function handleDragLeave(event) {
@@ -464,11 +518,31 @@
     ) {
       return; // Entering another cell, handleDragEnter will take over
     }
-    for (let row = 0; row < hovered.length; row++) {
-      for (let col = 0; col < hovered[row].length; col++) {
-        hovered[row][col] = false;
-      }
-    }
+    lastHoverRow = null;
+    lastHoverCol = null;
+    clearHoverPreview();
+  }
+
+  // Repaint the on-board ghost when the piece is rotated/flipped mid-drag.
+  $: if (
+    draggedPiece &&
+    $pieces[draggedPiece]?.shape &&
+    lastHoverRow !== null &&
+    lastHoverCol !== null
+  ) {
+    paintHoverPreview(lastHoverRow, lastHoverCol);
+  }
+
+  function handleDragRotate(event) {
+    if (!draggedPiece) return;
+    event.preventDefault();
+    handleRotateClick(draggedPiece);
+  }
+
+  function handleDragFlip(event) {
+    if (!draggedPiece) return;
+    event.preventDefault();
+    handleFlipClick(draggedPiece);
   }
 
   function handleOnClickBoard(event, row, col) {
@@ -702,7 +776,13 @@
   }
 </script>
 
-<svelte:window on:keyup={handleKeyUp} on:click={handleOnClick} />
+<svelte:window
+  on:keyup={handleKeyUp}
+  on:click={handleOnClick}
+  on:dragover={handleGlobalDragOver}
+  on:drop={handleGlobalDrop}
+  on:dragend={handleDragEnd}
+/>
 
 <div class="full-app">
   <Sidebar />
@@ -755,7 +835,7 @@
             on:dragleave={handleDragLeave}
             on:dragover={handleDragOver}
             on:drop={(event) => handleDrop(event, rowIndex, colIndex)}
-            on:dragend={() => (draggedPiece = null)}
+            on:dragend={handleDragEnd}
             on:click={(event) => handleOnClickBoard(event, rowIndex, colIndex)}
           ></div>
         {/each}
@@ -775,7 +855,7 @@
           class:placed={piece.placed}
           draggable={!piece.placed}
           on:dragstart={(event) => handleDragStart(event, pieceName)}
-          on:dragend={() => (draggedPiece = null)}
+          on:dragend={handleDragEnd}
           on:click={(event) => handleOnClick(event, pieceName)}
         >
           {#each piece.shape as row}
@@ -798,6 +878,50 @@
       </div>
     {/each}
   </div>
+
+  {#if draggedPiece && $pieces[draggedPiece]}
+    <div class="drag-preview" bind:this={dragPreviewEl} aria-hidden="true">
+      <div class="drag-preview-inner">
+        {#each $pieces[draggedPiece].shape as row}
+          <div class="piece-row">
+            {#each row as cell}
+              <div
+                class="piece-cell"
+                style="background-color: {cell === 1
+                  ? $pieces[draggedPiece].color
+                  : 'transparent'};"
+              ></div>
+            {/each}
+          </div>
+        {/each}
+      </div>
+    </div>
+  {/if}
+
+  {#if draggedPiece}
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div class="drag-actions" aria-hidden="true">
+      <div
+        class="drag-action-btn"
+        on:dragenter={handleDragRotate}
+        on:dragover|preventDefault
+        on:drop|preventDefault
+      >
+        <span class="drag-action-icon">↻</span>
+        <span class="drag-action-label">Rotate</span>
+      </div>
+      <div
+        class="drag-action-btn"
+        on:dragenter={handleDragFlip}
+        on:dragover|preventDefault
+        on:drop|preventDefault
+      >
+        <span class="drag-action-icon">⇋</span>
+        <span class="drag-action-label">Flip</span>
+      </div>
+    </div>
+  {/if}
+
   <Solver
     {board}
     bind:solution
@@ -907,6 +1031,98 @@
     justify-content: center;
     gap: 5px;
   }
+
+  .drag-preview {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    will-change: transform;
+    /* Off-screen until the first pointer event positions us. */
+    transform: translate3d(-9999px, -9999px, 0);
+  }
+
+  .drag-preview-inner {
+    transform: translate(-50%, -50%);
+    padding: 4px;
+    opacity: 0.95;
+  }
+
+  /* Hide the polyfill's drag image clone — our own preview replaces it. */
+  :global(.dnd-poly-drag-image) {
+    opacity: 0 !important;
+  }
+
+  .drag-actions {
+    position: fixed;
+    left: 50%;
+    bottom: 1.25rem;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 14px;
+    z-index: 9998;
+    pointer-events: auto;
+    padding: 8px;
+    border-radius: 14px;
+    background: rgba(20, 20, 20, 0.85);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    animation: drag-actions-in 0.18s ease-out;
+  }
+
+  .drag-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 84px;
+    min-height: 64px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: var(--button-bg-color, #2d7d46);
+    color: var(--button-text-color, #ffffff);
+    border: 2px dashed transparent;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    transition:
+      transform 0.1s ease,
+      border-color 0.1s ease,
+      background-color 0.1s ease;
+  }
+
+  .drag-action-btn:hover,
+  .drag-action-btn:active {
+    border-color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px) scale(1.05);
+  }
+
+  .drag-action-icon {
+    font-size: 22px;
+    font-weight: bold;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .drag-action-label {
+    font-size: 12px;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    pointer-events: none;
+  }
+
+  @keyframes drag-actions-in {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
 
   .piece-buttons button {
     padding: 5px 10px;
@@ -1049,6 +1265,20 @@
 
     .piece-container {
       max-width: 90px;
+    }
+
+    .drag-action-btn {
+      min-width: 72px;
+      min-height: 56px;
+      padding: 8px 12px;
+    }
+
+    .drag-action-icon {
+      font-size: 20px;
+    }
+
+    .drag-action-label {
+      font-size: 11px;
     }
   }
 </style>
