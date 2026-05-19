@@ -9,9 +9,7 @@
 
   import Solver from "./Solver.svelte";
   import Sidebar from "./Sidebar.svelte";
-  import ThemeSwitch from "./ThemeSwitch.svelte";
-  import TimerSwitch from "./TimerSwitch.svelte";
-  import CountdownTimer from "./CountdownTimer.svelte";
+  import SettingsModal from "./SettingsModal.svelte";
 
   onMount(() => {
     // mobile-drag-drop's synthetic dragover only fires at iterationInterval
@@ -28,7 +26,48 @@
     transparentDragImg = new Image(1, 1);
     transparentDragImg.src =
       "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
+    // Load persisted settings (fall back to system preference for theme on
+    // first visit). Wrapped in try/catch so quota/private-mode failures don't
+    // break the app.
+    let saved = {};
+    try {
+      saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+    } catch (_) {
+      saved = {};
+    }
+    isLightMode =
+      "isLightMode" in saved
+        ? !!saved.isLightMode
+        : window.matchMedia("(prefers-color-scheme: light)").matches;
+    if (typeof saved.timerEnabled === "boolean") timerEnabled = saved.timerEnabled;
+    if (typeof saved.fanEditionEnabled === "boolean") fanEditionEnabled = saved.fanEditionEnabled;
+    if (typeof saved.findAllSolutionsEnabled === "boolean")
+      findAllSolutionsEnabled = saved.findAllSolutionsEnabled;
+    if (typeof saved.randomPieceCount === "number")
+      randomPieceCount = saved.randomPieceCount;
+
+    document.documentElement.classList.toggle("light-mode", isLightMode);
+    settingsLoaded = true;
   });
+
+  $: if (settingsLoaded) {
+    try {
+      localStorage.setItem(
+        SETTINGS_KEY,
+        JSON.stringify({
+          isLightMode,
+          timerEnabled,
+          fanEditionEnabled,
+          findAllSolutionsEnabled,
+          randomPieceCount,
+        }),
+      );
+    } catch (_) {
+      // ignore (e.g. Safari private mode quota)
+    }
+    document.documentElement.classList.toggle("light-mode", isLightMode);
+  }
 
   const rows = 5;
   const cols = 11;
@@ -60,6 +99,16 @@
   let randomPieceCount = 2;
   let triggerRandom = false;
   let solvable = "";
+  let findAllSolutionsEnabled = false;
+
+  // Settings modal state
+  let isLightMode = false;
+  let fanEditionEnabled = false;
+
+  const SETTINGS_KEY = "kanoodle-settings";
+  // Block the persistence reactive until the initial load completes so it
+  // doesn't write defaults over the saved values on first render.
+  let settingsLoaded = false;
 
   // Track preplaced pieces in challenge mode
   let challengePreplacedPieces = new Set();
@@ -165,7 +214,49 @@
       color: "#612690",
       placed: false,
     },
+    m: {
+      shape: [
+        [0, 1, 0],
+        [1, 1, 1],
+      ],
+      color: "#000000",
+      placed: false,
+    },
+    M: {
+      shape: [
+        [0, 0, 1],
+        [1, 1, 1],
+        [1, 0, 0],
+      ],
+      color: "#1a1a1a",
+      placed: false,
+    },
   });
+
+  $: activePieceKeys = fanEditionEnabled
+    ? Object.keys($pieces)
+    : Object.keys($pieces).filter((k) => k !== "m" && k !== "M");
+
+  let prevFanEditionEnabled = fanEditionEnabled;
+  $: {
+    if (prevFanEditionEnabled && !fanEditionEnabled) {
+      // Toggle just turned off: scrub m/M off the board and reset their state.
+      for (let i = 0; i < board.length; i++) {
+        for (let j = 0; j < board[i].length; j++) {
+          if (board[i][j] === "m" || board[i][j] === "M") {
+            board[i][j] = null;
+          }
+        }
+      }
+      pieces.update((currentPieces) => {
+        currentPieces.m.placed = false;
+        currentPieces.M.placed = false;
+        return currentPieces;
+      });
+      board = board;
+    }
+    prevFanEditionEnabled = fanEditionEnabled;
+  }
 
   let updated = false;
 
@@ -178,9 +269,15 @@
     updated = true;
 
     if (solution !== null && request == "solve") {
+      const piecesInSolution = new Set();
+      for (const row of solution) {
+        for (const cell of row) {
+          if (cell) piecesInSolution.add(cell);
+        }
+      }
       pieces.update((currentPieces) => {
         for (let pieceName in currentPieces) {
-          currentPieces[pieceName].placed = true;
+          currentPieces[pieceName].placed = piecesInSolution.has(pieceName);
         }
         return currentPieces;
       });
@@ -193,9 +290,18 @@
         }
       }
     } else if (solution !== null && request == "hint") {
+      // Only hint with pieces that the solver actually used; in Fan Edition
+      // mode it may have left some pieces aside.
+      const piecesInSolution = new Set();
+      for (const row of solution) {
+        for (const cell of row) {
+          if (cell) piecesInSolution.add(cell);
+        }
+      }
+
       let hintPiece = null;
       for (let piece in $pieces) {
-        if (!$pieces[piece].placed) {
+        if (!$pieces[piece].placed && piecesInSolution.has(piece)) {
           hintPiece = piece;
           break;
         }
@@ -203,7 +309,7 @@
 
       let notPlaced = 0;
       for (let piece in $pieces) {
-        if (!$pieces[piece].placed) {
+        if (!$pieces[piece].placed && piecesInSolution.has(piece)) {
           notPlaced++;
         }
       }
@@ -227,20 +333,16 @@
         return currentPieces;
       });
     } else if (solution !== null && request.startsWith("random")) {
-      let options = [
-        "l",
-        "P",
-        "L",
-        "Y",
-        "N",
-        "i",
-        "V",
-        "W",
-        "U",
-        "I",
-        "S",
-        "X",
-      ];
+      // Pick from pieces that actually appear in the generated solution so
+      // bonus-pieces mode (where 2 of 14 are left unused) still preplaces a
+      // meaningful number of pieces.
+      const piecesInSolution = new Set();
+      for (const row of solution) {
+        for (const cell of row) {
+          if (cell) piecesInSolution.add(cell);
+        }
+      }
+      let options = [...piecesInSolution];
       let numRandomPieces = parseInt(request.split("-")[1]);
       let chosen = options
         .sort(() => Math.random() - 0.5)
@@ -714,7 +816,6 @@
     countdownActive = true;
     countdownSeconds = minutes * 60;
     challengeTotalSeconds = minutes * 60;
-    timerEnabled = true; // Make sure timer display is visible
     elapsedTime = 0; // Reset elapsed time
 
     if (countdownInterval) clearInterval(countdownInterval);
@@ -729,6 +830,7 @@
 
   function handleCountdownStop() {
     // Calculate elapsed time before stopping (for showing solve time)
+    const wasActive = countdownActive;
     if (countdownActive) {
       elapsedTime = (challengeTotalSeconds - countdownSeconds) * 1000;
     }
@@ -738,6 +840,12 @@
     if (countdownInterval) {
       clearInterval(countdownInterval);
       countdownInterval = null;
+    }
+    // If the user wants the regular timer visible, resume it with a fresh
+    // count; otherwise it stays hidden via the (timerEnabled || countdownActive)
+    // check in the template.
+    if (wasActive && timerEnabled) {
+      startTimer();
     }
   }
 
@@ -788,7 +896,7 @@
   <Sidebar />
   <div class="controls">
     <div class="timer-container">
-      {#if timerEnabled}
+      {#if timerEnabled || countdownActive}
         <div
           class="timer"
           class:countdown-mode={countdownActive &&
@@ -805,15 +913,41 @@
           {/if}
         </div>
       {/if}
-      <TimerSwitch bind:timerEnabled />
-      <ThemeSwitch />
-    </div>
-    <div class="countdown-wrapper">
-      <CountdownTimer
-        bind:isActive={countdownActive}
-        on:start={handleCountdownStart}
-        on:stop={handleCountdownStop}
-      />
+      {#if countdownActive}
+        <button
+          class="cancel-challenge-btn"
+          on:click={handleCountdownStop}
+          title="Cancel Challenge"
+          aria-label="Cancel challenge"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      {/if}
+      <div class="settings-anchor">
+        <SettingsModal
+          bind:isLightMode
+          bind:timerEnabled
+          bind:fanEditionEnabled
+          bind:findAllSolutionsEnabled
+          bind:randomPieceCount
+          {countdownActive}
+          on:startChallenge={(e) => handleCountdownStart(e)}
+          on:stopChallenge={handleCountdownStop}
+        />
+      </div>
     </div>
   </div>
   <div class="board">
@@ -844,7 +978,8 @@
   </div>
 
   <div class="pieces">
-    {#each Object.entries($pieces) as [pieceName, piece]}
+    {#each activePieceKeys as pieceName (pieceName)}
+      {@const piece = $pieces[pieceName]}
       <div class="piece-container">
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -924,11 +1059,13 @@
 
   <Solver
     {board}
+    {fanEditionEnabled}
     bind:solution
     bind:request
     bind:randomPieceCount
     bind:triggerRandom
     bind:solvable
+    bind:findAllSolutionsEnabled
   />
 </div>
 
@@ -938,7 +1075,7 @@
     flex-direction: column;
     gap: 15px;
     margin: 0 auto;
-    padding: 10px;
+    padding: 60px 10px 40px;
     max-width: 100%;
     box-sizing: border-box;
   }
@@ -1057,17 +1194,29 @@
   .drag-actions {
     position: fixed;
     left: 50%;
-    bottom: 1.25rem;
+    bottom: 0.25rem;
     transform: translateX(-50%);
     display: flex;
-    gap: 14px;
+    gap: 10px;
     z-index: 9998;
     pointer-events: auto;
-    padding: 8px;
-    border-radius: 14px;
+    padding: 6px;
+    border-radius: 12px;
     background: rgba(20, 20, 20, 0.85);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
     animation: drag-actions-in 0.18s ease-out;
+  }
+
+  @media (min-width: 1024px) {
+    .drag-actions {
+      left: auto;
+      right: 1.25rem;
+      bottom: auto;
+      top: 50%;
+      transform: translateY(-50%);
+      flex-direction: column;
+      animation: drag-actions-in-right 0.18s ease-out;
+    }
   }
 
   .drag-action-btn {
@@ -1076,8 +1225,8 @@
     align-items: center;
     justify-content: center;
     min-width: 84px;
-    min-height: 64px;
-    padding: 10px 16px;
+    min-height: 60px;
+    padding: 9px 15px;
     border-radius: 10px;
     background: var(--button-bg-color, #2d7d46);
     color: var(--button-text-color, #ffffff);
@@ -1098,7 +1247,7 @@
   }
 
   .drag-action-icon {
-    font-size: 22px;
+    font-size: 21px;
     font-weight: bold;
     line-height: 1;
     pointer-events: none;
@@ -1106,7 +1255,7 @@
 
   .drag-action-label {
     font-size: 12px;
-    margin-top: 4px;
+    margin-top: 3px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     pointer-events: none;
@@ -1120,6 +1269,17 @@
     to {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  @keyframes drag-actions-in-right {
+    from {
+      opacity: 0;
+      transform: translateY(-50%) translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
     }
   }
 
@@ -1144,6 +1304,23 @@
   .timer-container {
     display: flex;
     align-items: center;
+    gap: 8px;
+  }
+
+  .cancel-challenge-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--button-bg-color);
+    border: 1px solid transparent;
+    color: var(--text-color);
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .cancel-challenge-btn:hover {
+    opacity: 0.85;
   }
 
   .timer {
@@ -1204,11 +1381,6 @@
     }
   }
 
-  .countdown-wrapper {
-    display: flex;
-    justify-content: flex-end;
-  }
-
   @media (max-width: 768px) {
     .circle {
       width: 25px;
@@ -1245,11 +1417,17 @@
       align-items: center;
       padding: 0;
       margin: 0;
+      position: relative;
+      width: 100%;
     }
 
-    .countdown-wrapper {
-      justify-content: center;
-      width: 100%;
+    .settings-anchor {
+      position: absolute;
+      right: 0.5rem;
+      top: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
     }
   }
 
@@ -1269,12 +1447,12 @@
 
     .drag-action-btn {
       min-width: 72px;
-      min-height: 56px;
-      padding: 8px 12px;
+      min-height: 52px;
+      padding: 7px 12px;
     }
 
     .drag-action-icon {
-      font-size: 20px;
+      font-size: 19px;
     }
 
     .drag-action-label {

@@ -1,4 +1,4 @@
-const Letters = "-ABCDEFGHIJKL-abcdefghijkl";
+const Letters = "-ABCDEFGHIJKLMN-abcdefghijklmn";
 
 // Author: Lutz Tautenhahn, 2024, https://www.lutanho.net/
 // Modified by me
@@ -66,10 +66,12 @@ class NoodleSolver {
     this.NoodleOrder = new Int8Array(16);
     this.SymOps8Order = new Int8Array(16);
     this.SymOps4Order = new Int8Array(16);
+    this.PieceCount = 12;
   }
 
   Solve(ii0, jj0, rr) {
     let gg, xx3y, ii3j, ii, jj, ll, mm, mmn, mmp, oo, pp, qq, qql, qqo, nnxt = this.Next, pprv = this.Prev;
+    const pieceLimit = this.PieceCount + 1;
     gg = this.IGrid;
     ii = ii0;
     jj = jj0;
@@ -84,7 +86,7 @@ class NoodleSolver {
     }
     ii3j = (ii << 3) + jj;
     mm = nnxt[0];
-    while (mm < 13) {
+    while (mm < pieceLimit) {
       qq = this.Noodles[mm - 1];
       qqo = qq.o;
       qql = qq.l;
@@ -112,14 +114,16 @@ class NoodleSolver {
     return 0;
   }
 
-  Init(tt, rr) {
-    let ii, jj, nn, ss = "-ABCDEFGHIJKL-abcdefghijkl", aa = tt.split(",");
+  Init(tt, rr, useFanEdition = false) {
+    const pieceCount = useFanEdition ? 14 : 12;
+    this.PieceCount = pieceCount;
+    let ii, jj, nn, ss = Letters, aa = tt.split(",");
     let oo = this.NoodleOrder;
     this.SolutionCounter = 0;
     this.InitArray(this.SymOps8Order, 0, 8, rr);
     this.InitArray(this.SymOps4Order, 0, 4, rr);
-    this.InitArray(oo, 0, 12, rr);
-    for (ii = 0; ii < 12; ii++) this.NoodleRank[oo[ii]] = ii;
+    this.InitArray(oo, 0, pieceCount, rr);
+    for (ii = 0; ii < pieceCount; ii++) this.NoodleRank[oo[ii]] = ii;
     this.Noodles[oo[0]] = new Noodle(8, [0, 0, 1, 0, 2, 0, 0, 1]);
     this.Noodles[oo[1]] = new Noodle(8, [0, 0, 1, 0, 2, 0, 0, 1, 1, 1]);
     this.Noodles[oo[2]] = new Noodle(8, [0, 0, 1, 0, 2, 0, 3, 0, 0, 1]);
@@ -132,6 +136,13 @@ class NoodleSolver {
     this.Noodles[oo[9]] = new Noodle(2, [0, 0, 1, 0, 2, 0, 3, 0]);
     this.Noodles[oo[10]] = new Noodle(1, [0, 0, 1, 0, 0, 1, 1, 1]);
     this.Noodles[oo[11]] = new Noodle(1, [1, 0, 0, 1, 1, 1, 2, 1, 1, 2]);
+    if (useFanEdition) {
+      // m: T-tetromino [[0,1,0],[1,1,1]] (4 unique orientations; mirror-symmetric so no flips needed)
+      this.Noodles[oo[12]] = new Noodle(4, [1, 0, 0, 1, 1, 1, 2, 1]);
+      // M: S/Z-pentomino [[0,0,1],[1,1,1],[1,0,0]] - use 8 so flipped (S) variants are searched too.
+      // 180-degree rotation maps to itself, so 4 of the 8 entries are duplicates; harmless.
+      this.Noodles[oo[13]] = new Noodle(8, [2, 0, 0, 1, 1, 1, 2, 1, 0, 2]);
+    }
     for (ii = 0; ii < 16; ii++) this.Next[ii] = ii + 1;
     for (ii = 0; ii < 16; ii++) this.Prev[ii] = ii - 1;
     for (ii = 0; ii < 128; ii++) this.IGrid[ii] = 1;
@@ -139,14 +150,15 @@ class NoodleSolver {
     for (jj = 0; jj < 5; jj++) {
       if (aa[jj].length != 11) return 0;
     }
+    const modulus = pieceCount + 1;
     for (jj = 0; jj < 5; jj++) {
       for (ii = 0; ii < 11; ii++) {
         nn = ss.indexOf(aa[jj].charAt(ii));
         if (nn <= 0) this.IGrid[(ii << 3) + jj] = 0;
         else {
-          this.IGrid[(ii << 3) + jj] = oo[nn % 13 - 1] + 1;
+          this.IGrid[(ii << 3) + jj] = oo[nn % modulus - 1] + 1;
           if (nn > 0) {
-            nn = oo[nn % 13 - 1] + 1;
+            nn = oo[nn % modulus - 1] + 1;
             if (this.Prev[this.Next[nn]] == nn) this.Prev[this.Next[nn]] = this.Prev[nn];
             if (this.Next[this.Prev[nn]] == nn) this.Next[this.Prev[nn]] = this.Next[nn];
           }
@@ -196,7 +208,7 @@ function checkObviousFail(board) {
   return false;
 }
 
-export function startSolve(gridState, { findAll = false, maxSolutions = 1000 } = {}) {
+export function startSolve(gridState, { findAll = false, maxSolutions = 1000, useFanEdition = false } = {}) {
   let tt = "";
   for (let jj = 0; jj < 5; jj++) {
     if (jj > 0) tt += ",";
@@ -209,7 +221,8 @@ export function startSolve(gridState, { findAll = false, maxSolutions = 1000 } =
   // Pass -1 to Init to enable randomization (needed for random game variety)
   // Pass 0 when finding all solutions for deterministic ordering
   const initRandom = findAll ? 0 : -1;
-  if (!checkObviousFail(gridState) && ss.Init(tt, initRandom)) {
+  if (!checkObviousFail(gridState) && ss.Init(tt, initRandom, useFanEdition)) {
+    const pieceLimit = ss.PieceCount + 1;
 
     if (findAll) {
       // Find all solutions mode
@@ -240,7 +253,7 @@ export function startSolve(gridState, { findAll = false, maxSolutions = 1000 } =
         const ii3j = (ii << 3) + jj;
         let mm = ss.Next[0];
 
-        while (mm < 13) {
+        while (mm < pieceLimit) {
           const qq = ss.Noodles[mm - 1];
           const qqo = qq.o;
           const qql = qq.l;

@@ -81,20 +81,18 @@
                     You can use the buttons under the pieces to rotate and flip
                     them, click the pieces to cycle through all unique
                     orientations, or press <b>R</b>
-                    and <b>F</b>.
+                    and <b>F</b>. You can also touch the pieces to the
+                    <b>Rotate</b>/<b>Flip</b> buttons while dragging.
                 </p>
                 <p><b>Solvable?</b> — check if board is solvable</p>
                 <p><b>Hint</b> — place one piece for you</p>
+                <p><b>Solve</b> — solve the board</p>
+                <p><b>Random Game</b> — generate a puzzle</p>
                 <p>
-                    <b>Solve ▼</b> — solve the board (dropdown: "find all
-                    solutions" which also makes <i>Solvable?</i> count solutions)
-                </p>
-                <p>
-                    <b>Random Game ▼</b> — generate a puzzle (dropdown: piece count)
-                </p>
-                <p>
-                    <b>Challenge</b> — timed mode, solve a random board before time
-                    runs out
+                    Open the <b>settings</b> (gear icon, top right) to change theme,
+                    toggle the timer, adjust the random-pieces count, enable "find
+                    all solutions", start a timed <b>Challenge</b>, or unlock the
+                    two <b>bonus pieces</b> from the Fan Edition.
                 </p>
                 <br />
                 <p>
