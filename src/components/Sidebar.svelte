@@ -1,17 +1,11 @@
 <script>
-    import { onMount } from "svelte";
-
-    let isOpen = false;
+    export let isOpen = false;
 
     // Touch/swipe tracking
     let touchStartX = 0;
     let touchCurrentX = 0;
     let isDragging = false;
     let swipeOffset = 0;
-
-    onMount(() => {
-        isOpen = true;
-    });
 
     function toggleSidebar() {
         isOpen = !isOpen;

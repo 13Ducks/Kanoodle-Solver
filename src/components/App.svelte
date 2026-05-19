@@ -53,6 +53,10 @@
       findAllSolutionsEnabled = saved.findAllSolutionsEnabled;
     if (typeof saved.randomPieceCount === "number")
       randomPieceCount = saved.randomPieceCount;
+    // First-time visitors get the sidebar opened (with its slide-in animation,
+    // since the prerendered HTML starts closed). Returning visitors get
+    // whatever state they last left it in.
+    sidebarOpen = typeof saved.sidebarOpen === "boolean" ? saved.sidebarOpen : true;
 
     document.documentElement.classList.toggle("light-mode", isLightMode);
     settingsLoaded = true;
@@ -68,6 +72,7 @@
           fanEditionEnabled,
           findAllSolutionsEnabled,
           randomPieceCount,
+          sidebarOpen,
         }),
       );
     } catch (_) {
@@ -111,6 +116,10 @@
   // Settings modal state
   let isLightMode = false;
   let fanEditionEnabled = false;
+
+  // Sidebar state (persisted). Starts closed to match the prerendered HTML;
+  // the saved/default value is applied in onMount so the slide-in still plays.
+  let sidebarOpen = false;
 
   const SETTINGS_KEY = "kanoodle-settings";
   // Block the persistence reactive until the initial load completes so it
@@ -900,7 +909,7 @@
 />
 
 <div class="full-app">
-  <Sidebar />
+  <Sidebar bind:isOpen={sidebarOpen} />
   <div class="controls">
     <div class="timer-container">
       {#if timerEnabled || countdownActive}
