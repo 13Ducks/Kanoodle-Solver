@@ -274,6 +274,10 @@
         flex-wrap: wrap;
     }
 
+    .button-row button {
+        touch-action: manipulation; /* Prevents double-tap zoom on mobile */
+    }
+
     .solvable-btn {
         min-width: 7em;
     }
@@ -330,6 +334,7 @@
         cursor: pointer;
         border-radius: 4px;
         transition: transform 0.1s ease;
+        touch-action: manipulation; /* Prevents double-tap zoom on mobile */
     }
 
     .nav-btn:hover {

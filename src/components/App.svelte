@@ -1091,12 +1091,6 @@
     z-index: 1;
   }
 
-  .title {
-    text-align: center;
-    font-size: 2rem;
-    margin-bottom: 10px;
-  }
-
   .board {
     display: flex;
     flex-direction: column;
@@ -1324,6 +1318,7 @@
     padding: 4px 8px;
     border-radius: 6px;
     cursor: pointer;
+    touch-action: manipulation; /* Prevents double-tap zoom on mobile */
   }
 
   .cancel-challenge-btn:hover {
@@ -1426,6 +1421,10 @@
       margin: 0;
       position: relative;
       width: 100%;
+      /* Reserve the gear icon's natural height (22px svg + 6px padding) so the
+         absolutely-positioned settings icon stays in the same spot whether or
+         not the timer is rendered. */
+      min-height: 34px;
     }
 
     .settings-anchor {

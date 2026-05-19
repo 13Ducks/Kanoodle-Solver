@@ -151,6 +151,7 @@
         z-index: 4;
         transition: transform 0.3s ease-in-out;
         transform: translateX(0);
+        touch-action: manipulation; /* Prevents double-tap zoom on mobile */
     }
 
     .toggle-btn.open {

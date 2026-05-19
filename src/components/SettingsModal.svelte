@@ -291,6 +291,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        touch-action: manipulation; /* Prevents double-tap zoom on mobile */
     }
 
     .gear-btn:hover {
@@ -347,6 +348,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        touch-action: manipulation; /* Prevents double-tap zoom on mobile */
     }
 
     .close-btn:hover {
@@ -405,6 +407,7 @@
         padding: 6px 14px;
         font-size: 0.85rem;
         border-radius: 6px;
+        touch-action: manipulation; /* Prevents double-tap zoom on mobile */
     }
 
     .switch {
@@ -416,6 +419,7 @@
         cursor: pointer;
         transition: background 0.2s ease;
         flex-shrink: 0;
+        touch-action: manipulation; /* Prevents double-tap zoom on mobile */
     }
 
     .switch.on {
@@ -456,6 +460,7 @@
         color: var(--button-text-color);
         border: 1px solid transparent;
         cursor: pointer;
+        touch-action: manipulation; /* Prevents double-tap zoom on mobile */
     }
 
     .chip.selected {
@@ -479,6 +484,7 @@
         font-weight: 600;
         border-radius: 8px;
         cursor: pointer;
+        touch-action: manipulation; /* Prevents double-tap zoom on mobile */
     }
 
     .primary-btn:hover {
